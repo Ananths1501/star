@@ -37,7 +37,7 @@ const LoadingScreen = ({ onLoadingComplete }) => {
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-white dark:bg-gray-900 transition-opacity duration-500 ${fadeOut ? "opacity-0" : "opacity-100"}`}
+      className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-b from-gradient-blue via-gradient-purple to-gradient-red transition-opacity duration-500 ${fadeOut ? "opacity-0" : "opacity-100"}`}
     >
       <div className="w-full max-w-md">
         {!videoEnded ? (
@@ -46,8 +46,8 @@ const LoadingScreen = ({ onLoadingComplete }) => {
           </video>
         ) : (
           <div className="flex flex-col items-center">
-            <div className="w-16 h-16 border-t-4 border-b-4 border-blue-500 rounded-full animate-spin"></div>
-            <p className="mt-4 text-lg font-medium text-gray-700 dark:text-gray-300">Loading Star Electricals...</p>
+            <div className="w-16 h-16 border-t-4 border-b-4 border-white rounded-full animate-spin"></div>
+            <p className="mt-4 text-lg font-medium text-white">Loading Star Electricals...</p>
           </div>
         )}
       </div>

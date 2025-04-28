@@ -262,6 +262,7 @@ const AdminOrders = () => {
   )
 }
 
+// Update the OrderDetailsModal with gradient background
 const OrderDetailsModal = ({ order, onClose, onStatusUpdate }) => {
   const [status, setStatus] = useState(order.status)
   const [isLoading, setIsLoading] = useState(false)
@@ -292,11 +293,14 @@ const OrderDetailsModal = ({ order, onClose, onStatusUpdate }) => {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center p-4 border-b dark:border-gray-700">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Order Details</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+    <div className="fixed inset-0 bg-gradient-primary bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4 modal-backdrop">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-slide-up">
+        <div className="flex justify-between items-center p-4 border-b dark:border-gray-700 bg-gradient-to-r from-primary-dark/10 to-primary/10 dark:from-primary-dark/20 dark:to-primary/20">
+          <h2 className="text-xl font-bold text-primary-dark dark:text-white">Order Details</h2>
+          <button
+            onClick={onClose}
+            className="text-primary hover:text-primary-pink dark:hover:text-primary-pink/80 transition-colors hover:scale-110"
+          >
             <X size={24} />
           </button>
         </div>
@@ -413,16 +417,16 @@ const OrderDetailsModal = ({ order, onClose, onStatusUpdate }) => {
             </table>
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between p-4 bg-gradient-to-r from-primary/5 to-primary-dark/5 dark:from-primary/10 dark:to-primary-dark/10 border-t border-primary/10 dark:border-primary/5">
             <div className="w-1/2">
-              <label htmlFor="status" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label htmlFor="status" className="block text-sm font-medium text-primary-dark dark:text-gray-300 mb-1">
                 Update Status
               </label>
               <select
                 id="status"
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                className="w-full px-3 py-2 border border-primary/30 dark:border-primary/20 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
               >
                 <option value="Pending">Pending</option>
                 <option value="Processing">Processing</option>
@@ -434,14 +438,14 @@ const OrderDetailsModal = ({ order, onClose, onStatusUpdate }) => {
             <div className="flex space-x-2">
               <button
                 onClick={onClose}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="px-4 py-2 border border-primary/30 dark:border-primary/20 rounded-md text-primary-dark dark:text-gray-300 hover:bg-primary/10 dark:hover:bg-primary/20 transition-all hover:-translate-y-1 active:translate-y-0"
               >
                 Close
               </button>
               <button
                 onClick={handleStatusChange}
                 disabled={isLoading || status === order.status}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-70"
+                className="px-4 py-2 bg-gradient-primary text-white rounded-md transition-all hover:-translate-y-1 active:translate-y-0 shadow-md hover:shadow-purple-glow disabled:opacity-70"
               >
                 {isLoading ? "Updating..." : "Update Status"}
               </button>

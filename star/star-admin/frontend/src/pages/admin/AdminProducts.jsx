@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Edit, Search, Filter, X, Trash2 } from "lucide-react"
+import { Plus, Edit, Search, Filter, X, Trash2, AlertCircle, RefreshCw } from "lucide-react"
 import { toast } from "react-hot-toast"
 import api from "../../utils/api"
 
@@ -9,6 +9,7 @@ const AdminProducts = () => {
   const [products, setProducts] = useState([])
   const [filteredProducts, setFilteredProducts] = useState([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [showAddModal, setShowAddModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [currentProduct, setCurrentProduct] = useState(null)
@@ -17,6 +18,7 @@ const AdminProducts = () => {
   const [showFilters, setShowFilters] = useState(false)
   const [types, setTypes] = useState([])
   const [brands, setBrands] = useState([])
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     fetchProducts()
@@ -34,14 +36,17 @@ const AdminProducts = () => {
   const fetchProducts = async () => {
     try {
       setIsLoading(true)
+      setError(null)
       const response = await api.get("/products")
       setProducts(response.data)
       setFilteredProducts(response.data)
     } catch (error) {
       console.error("Error fetching products:", error)
+      setError("Failed to load products. Please try again.")
       toast.error("Failed to load products")
     } finally {
       setIsLoading(false)
+      setIsRefreshing(false)
     }
   }
 
@@ -74,6 +79,11 @@ const AdminProducts = () => {
     })
 
     setFilteredProducts(filtered)
+  }
+
+  const handleRefresh = () => {
+    setIsRefreshing(true)
+    fetchProducts()
   }
 
   const handleAddProduct = () => {
@@ -119,7 +129,7 @@ const AdminProducts = () => {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-full">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
       </div>
     )
   }
@@ -127,33 +137,50 @@ const AdminProducts = () => {
   return (
     <div className="container mx-auto">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Products</h1>
-        <button
-          onClick={handleAddProduct}
-          className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-primary/90 transition-colors flex items-center"
-        >
-          <Plus size={18} className="mr-1" /> Add Product
-        </button>
+        <h1 className="text-2xl font-bold text-white">Products</h1>
+        <div className="flex gap-4">
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-md text-white hover:bg-white/20 transition-all duration-300 disabled:opacity-50"
+          >
+            {isRefreshing ? <RefreshCw className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+            Refresh
+          </button>
+          <button
+            onClick={handleAddProduct}
+            className="px-4 py-2 bg-gradient-to-r from-blue-600 via-purple-600 to-red-600 hover:from-blue-700 hover:via-purple-700 hover:to-red-700 text-white rounded-md transition-all duration-300 hover:shadow-lg flex items-center"
+          >
+            <Plus size={18} className="mr-1" /> Add Product
+          </button>
+        </div>
       </div>
 
+      {error && (
+        <div className="mb-6 bg-red-500/20 backdrop-blur-sm border border-red-500/50 rounded-lg p-4 text-white flex items-center">
+          <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0" />
+          <p>{error}</p>
+        </div>
+      )}
+
       {/* Search and Filter */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6">
+      <div className="bg-white/10 backdrop-blur-md rounded-lg shadow-lg border border-white/20 p-4 mb-6">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/70" size={18} />
             <input
               type="text"
               placeholder={`Search by ${filterType}...`}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
+              className="w-full pl-10 pr-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white placeholder-white/70 backdrop-blur-sm transition-all duration-300"
             />
           </div>
 
           <div className="flex gap-2">
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+              className="px-4 py-2 bg-gradient-to-r from-blue-600/30 via-purple-600/30 to-red-600/30 hover:from-blue-600/40 hover:via-purple-600/40 hover:to-red-600/40 border border-white/30 rounded-md text-white transition-all duration-300 flex items-center"
             >
               <Filter size={18} className="mr-1" /> Filter
             </button>
@@ -164,40 +191,40 @@ const AdminProducts = () => {
           <div className="mt-4 flex flex-wrap gap-2">
             <button
               onClick={() => setFilterType("name")}
-              className={`px-3 py-1 rounded-full text-sm ${
+              className={`px-3 py-1 rounded-full text-sm transition-all duration-300 ${
                 filterType === "name"
-                  ? "bg-primary text-white"
-                  : "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                  ? "bg-gradient-to-r from-blue-600 via-purple-600 to-red-600 text-white"
+                  : "bg-white/10 text-white hover:bg-white/20"
               }`}
             >
               Name
             </button>
             <button
               onClick={() => setFilterType("brand")}
-              className={`px-3 py-1 rounded-full text-sm ${
+              className={`px-3 py-1 rounded-full text-sm transition-all duration-300 ${
                 filterType === "brand"
-                  ? "bg-primary text-white"
-                  : "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                  ? "bg-gradient-to-r from-blue-600 via-purple-600 to-red-600 text-white"
+                  : "bg-white/10 text-white hover:bg-white/20"
               }`}
             >
               Brand
             </button>
             <button
               onClick={() => setFilterType("type")}
-              className={`px-3 py-1 rounded-full text-sm ${
+              className={`px-3 py-1 rounded-full text-sm transition-all duration-300 ${
                 filterType === "type"
-                  ? "bg-primary text-white"
-                  : "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                  ? "bg-gradient-to-r from-blue-600 via-purple-600 to-red-600 text-white"
+                  : "bg-white/10 text-white hover:bg-white/20"
               }`}
             >
               Type
             </button>
             <button
               onClick={() => setFilterType("productId")}
-              className={`px-3 py-1 rounded-full text-sm ${
+              className={`px-3 py-1 rounded-full text-sm transition-all duration-300 ${
                 filterType === "productId"
-                  ? "bg-primary text-white"
-                  : "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                  ? "bg-gradient-to-r from-blue-600 via-purple-600 to-red-600 text-white"
+                  : "bg-white/10 text-white hover:bg-white/20"
               }`}
             >
               Product ID
@@ -208,15 +235,15 @@ const AdminProducts = () => {
 
       {/* Products Grid */}
       {filteredProducts.length === 0 ? (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8 text-center">
-          <p className="text-gray-500 dark:text-gray-400">No products found</p>
+        <div className="bg-white/10 backdrop-blur-md rounded-lg shadow-lg border border-white/20 p-8 text-center">
+          <p className="text-white/70">No products found matching your search.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 animate-fade-in">
           {filteredProducts.map((product) => (
             <div
               key={product._id}
-              className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden hover:shadow-md transition-shadow"
+              className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 hover:translate-y-[-5px]"
             >
               <div className="h-48 overflow-hidden">
                 <img
@@ -226,40 +253,40 @@ const AdminProducts = () => {
                 />
               </div>
               <div className="p-4">
-                <h3 className="font-semibold text-lg mb-1 text-gray-900 dark:text-white">{product.name}</h3>
-                <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
+                <h3 className="font-semibold text-lg mb-1 text-white">{product.name}</h3>
+                <div className="flex justify-between text-sm text-white/70 mb-2">
                   <span>{product.brand}</span>
                   <span>{product.type}</span>
                 </div>
                 <div className="flex justify-between items-center mb-3">
                   <div>
-                    <span className="font-bold text-primary">
+                    <span className="font-bold text-white">
                       ₹{(product.price * (1 - product.discount / 100)).toFixed(2)}
                     </span>
                     {product.discount > 0 && (
-                      <span className="ml-2 text-xs text-gray-500 line-through">₹{product.price.toFixed(2)}</span>
+                      <span className="ml-2 text-xs text-white/50 line-through">₹{product.price.toFixed(2)}</span>
                     )}
                   </div>
                   {product.discount > 0 && (
-                    <span className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 text-xs px-2 py-1 rounded-full">
+                    <span className="bg-red-500/30 text-white text-xs px-2 py-1 rounded-full">
                       {product.discount}% OFF
                     </span>
                   )}
                 </div>
                 <div className="flex justify-between text-sm mb-3">
-                  <span className="text-gray-600 dark:text-gray-400">Stock: {product.stock}</span>
-                  <span className="text-gray-600 dark:text-gray-400">Min Stock: {product.minStock}</span>
+                  <span className="text-white/70">Stock: {product.stock}</span>
+                  <span className="text-white/70">Min Stock: {product.minStock}</span>
                 </div>
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleEditProduct(product)}
-                    className="flex-1 py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md flex items-center justify-center text-sm"
+                    className="flex-1 py-2 px-3 bg-gradient-to-r from-blue-600 via-purple-600 to-red-600 hover:from-blue-700 hover:via-purple-700 hover:to-red-700 text-white rounded-md flex items-center justify-center text-sm transition-all duration-300 hover:shadow-lg"
                   >
                     <Edit size={16} className="mr-1" /> Edit
                   </button>
                   <button
                     onClick={() => handleDeleteProduct(product._id)}
-                    className="py-2 px-3 bg-red-600 hover:bg-red-700 text-white rounded-md flex items-center justify-center text-sm"
+                    className="py-2 px-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-md flex items-center justify-center text-sm transition-all duration-300 hover:shadow-lg"
                   >
                     <Trash2 size={16} />
                   </button>
@@ -362,11 +389,11 @@ const AddProductModal = ({ onClose, onProductAdded, types, brands }) => {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center p-4 border-b dark:border-gray-700">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Add New Product</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 modal-backdrop">
+      <div className="bg-gradient-to-b from-blue-900/90 via-purple-800/90 to-red-800/90 backdrop-blur-md rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-slide-up border border-white/20">
+        <div className="flex justify-between items-center p-4 border-b border-white/20">
+          <h2 className="text-xl font-bold text-white">Add New Product</h2>
+          <button onClick={onClose} className="text-white hover:text-white/80 transition-colors hover:scale-110">
             <X size={24} />
           </button>
         </div>
@@ -374,23 +401,23 @@ const AddProductModal = ({ onClose, onProductAdded, types, brands }) => {
         <form onSubmit={handleSubmit} className="p-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Product Name *</label>
+              <label className="block text-sm font-medium text-white mb-1">Product Name *</label>
               <input
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
+                className="w-full px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white placeholder-white/70"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Brand *</label>
+              <label className="block text-sm font-medium text-white mb-1">Brand *</label>
               <select
                 name="brand"
                 value={formData.brand}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
+                className="w-full px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white"
                 required
               >
                 <option value="">Select Brand</option>
@@ -407,17 +434,17 @@ const AddProductModal = ({ onClose, onProductAdded, types, brands }) => {
                   name="brand"
                   placeholder="Enter brand name"
                   onChange={handleChange}
-                  className="w-full mt-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
+                  className="w-full mt-2 px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white"
                 />
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type *</label>
+              <label className="block text-sm font-medium text-white mb-1">Type *</label>
               <select
                 name="type"
                 value={formData.type}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
+                className="w-full px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white"
                 required
               >
                 <option value="">Select Type</option>
@@ -434,12 +461,12 @@ const AddProductModal = ({ onClose, onProductAdded, types, brands }) => {
                   name="type"
                   placeholder="Enter product type"
                   onChange={handleChange}
-                  className="w-full mt-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
+                  className="w-full mt-2 px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white"
                 />
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Price (₹) *</label>
+              <label className="block text-sm font-medium text-white mb-1">Price (₹) *</label>
               <input
                 type="number"
                 name="price"
@@ -447,12 +474,12 @@ const AddProductModal = ({ onClose, onProductAdded, types, brands }) => {
                 onChange={handleChange}
                 min="0"
                 step="0.01"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
+                className="w-full px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Discount (%)</label>
+              <label className="block text-sm font-medium text-white mb-1">Discount (%)</label>
               <input
                 type="number"
                 name="discount"
@@ -460,87 +487,89 @@ const AddProductModal = ({ onClose, onProductAdded, types, brands }) => {
                 onChange={handleChange}
                 min="0"
                 max="100"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
+                className="w-full px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Warranty (months)
-              </label>
+              <label className="block text-sm font-medium text-white mb-1">Warranty (months)</label>
               <input
                 type="number"
                 name="warranty"
                 value={formData.warranty}
                 onChange={handleChange}
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
+                className="w-full px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Stock *</label>
+              <label className="block text-sm font-medium text-white mb-1">Stock *</label>
               <input
                 type="number"
                 name="stock"
                 value={formData.stock}
                 onChange={handleChange}
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
+                className="w-full px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Minimum Stock *</label>
+              <label className="block text-sm font-medium text-white mb-1">Minimum Stock *</label>
               <input
                 type="number"
                 name="minStock"
                 value={formData.minStock}
                 onChange={handleChange}
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
+                className="w-full px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white"
                 required
               />
             </div>
           </div>
 
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description *</label>
+            <label className="block text-sm font-medium text-white mb-1">Description *</label>
             <textarea
               name="description"
               value={formData.description}
               onChange={handleChange}
               rows="3"
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
+              className="w-full px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white"
               required
             ></textarea>
           </div>
 
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Product Image</label>
+            <label className="block text-sm font-medium text-white mb-1">Product Image</label>
             <input
               type="file"
               accept="image/*"
               onChange={handleImageChange}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
+              className="w-full px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white"
             />
             {previewUrl && (
               <div className="mt-2">
-                <img src={previewUrl || "/placeholder.svg"} alt="Preview" className="h-32 object-contain" />
+                <img
+                  src={previewUrl || "/placeholder.svg"}
+                  alt="Preview"
+                  className="h-32 object-contain rounded-md border border-white/20"
+                />
               </div>
             )}
           </div>
 
-          <div className="flex justify-end space-x-2">
+          <div className="flex justify-end space-x-2 p-4 border-t border-white/20">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="px-4 py-2 border border-white/30 rounded-md text-white hover:bg-white/10 transition-all duration-300 hover:-translate-y-1 active:translate-y-0"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isLoading}
-              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-primary/90 transition-colors disabled:opacity-70"
+              className="px-4 py-2 bg-gradient-to-r from-blue-600 via-purple-600 to-red-600 hover:from-blue-700 hover:via-purple-700 hover:to-red-700 text-white rounded-md transition-all duration-300 hover:-translate-y-1 active:translate-y-0 shadow-md hover:shadow-lg disabled:opacity-70"
             >
               {isLoading ? "Adding..." : "Add Product"}
             </button>
@@ -624,11 +653,11 @@ const EditProductModal = ({ product, onClose, onProductUpdated, types, brands })
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center p-4 border-b dark:border-gray-700">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Edit Product</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 modal-backdrop">
+      <div className="bg-gradient-to-b from-blue-900/90 via-purple-800/90 to-red-800/90 backdrop-blur-md rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-slide-up border border-white/20">
+        <div className="flex justify-between items-center p-4 border-b border-white/20">
+          <h2 className="text-xl font-bold text-white">Edit Product</h2>
+          <button onClick={onClose} className="text-white hover:text-white/80 transition-colors hover:scale-110">
             <X size={24} />
           </button>
         </div>
@@ -636,23 +665,23 @@ const EditProductModal = ({ product, onClose, onProductUpdated, types, brands })
         <form onSubmit={handleSubmit} className="p-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Product Name *</label>
+              <label className="block text-sm font-medium text-white mb-1">Product Name *</label>
               <input
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
+                className="w-full px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Brand *</label>
+              <label className="block text-sm font-medium text-white mb-1">Brand *</label>
               <select
                 name="brand"
                 value={brands.includes(formData.brand) ? formData.brand : "other"}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
+                className="w-full px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white"
                 required
               >
                 <option value="">Select Brand</option>
@@ -670,17 +699,17 @@ const EditProductModal = ({ product, onClose, onProductUpdated, types, brands })
                   value={formData.brand}
                   placeholder="Enter brand name"
                   onChange={handleChange}
-                  className="w-full mt-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
+                  className="w-full mt-2 px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white"
                 />
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type *</label>
+              <label className="block text-sm font-medium text-white mb-1">Type *</label>
               <select
                 name="type"
                 value={types.includes(formData.type) ? formData.type : "other"}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
+                className="w-full px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white"
                 required
               >
                 <option value="">Select Type</option>
@@ -698,12 +727,12 @@ const EditProductModal = ({ product, onClose, onProductUpdated, types, brands })
                   value={formData.type}
                   placeholder="Enter product type"
                   onChange={handleChange}
-                  className="w-full mt-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
+                  className="w-full mt-2 px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white"
                 />
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Price (₹) *</label>
+              <label className="block text-sm font-medium text-white mb-1">Price (₹) *</label>
               <input
                 type="number"
                 name="price"
@@ -711,12 +740,12 @@ const EditProductModal = ({ product, onClose, onProductUpdated, types, brands })
                 onChange={handleChange}
                 min="0"
                 step="0.01"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
+                className="w-full px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Discount (%)</label>
+              <label className="block text-sm font-medium text-white mb-1">Discount (%)</label>
               <input
                 type="number"
                 name="discount"
@@ -724,90 +753,86 @@ const EditProductModal = ({ product, onClose, onProductUpdated, types, brands })
                 onChange={handleChange}
                 min="0"
                 max="100"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
+                className="w-full px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Warranty (months)
-              </label>
+              <label className="block text-sm font-medium text-white mb-1">Warranty (months)</label>
               <input
                 type="number"
                 name="warranty"
                 value={formData.warranty}
                 onChange={handleChange}
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
+                className="w-full px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Stock *</label>
+              <label className="block text-sm font-medium text-white mb-1">Stock *</label>
               <input
                 type="number"
                 name="stock"
                 value={formData.stock}
                 onChange={handleChange}
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
+                className="w-full px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Minimum Stock *</label>
+              <label className="block text-sm font-medium text-white mb-1">Minimum Stock *</label>
               <input
                 type="number"
                 name="minStock"
                 value={formData.minStock}
                 onChange={handleChange}
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
+                className="w-full px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white"
                 required
               />
             </div>
           </div>
 
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description *</label>
+            <label className="block text-sm font-medium text-white mb-1">Description *</label>
             <textarea
               name="description"
               value={formData.description}
               onChange={handleChange}
               rows="3"
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
+              className="w-full px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white"
               required
             ></textarea>
           </div>
 
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Current Image</label>
+            <label className="block text-sm font-medium text-white mb-1">Current Image</label>
             <img
               src={previewUrl || product.image || "/placeholder.svg?height=100&width=100"}
               alt={product.name}
-              className="w-32 h-32 object-cover rounded-md mb-2"
+              className="w-32 h-32 object-cover rounded-md mb-2 border border-white/20"
             />
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 mt-2">
-              Change Image (optional)
-            </label>
+            <label className="block text-sm font-medium text-white mb-1 mt-2">Change Image (optional)</label>
             <input
               type="file"
               accept="image/*"
               onChange={handleImageChange}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
+              className="w-full px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white"
             />
           </div>
 
-          <div className="flex justify-end space-x-2">
+          <div className="flex justify-end space-x-2 p-4 border-t border-white/20">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="px-4 py-2 border border-white/30 rounded-md text-white hover:bg-white/10 transition-all duration-300 hover:-translate-y-1 active:translate-y-0"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isLoading}
-              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-primary/90 transition-colors disabled:opacity-70"
+              className="px-4 py-2 bg-gradient-to-r from-blue-600 via-purple-600 to-red-600 hover:from-blue-700 hover:via-purple-700 hover:to-red-700 text-white rounded-md transition-all duration-300 hover:-translate-y-1 active:translate-y-0 shadow-md hover:shadow-lg disabled:opacity-70"
             >
               {isLoading ? "Updating..." : "Update Product"}
             </button>

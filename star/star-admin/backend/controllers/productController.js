@@ -224,8 +224,8 @@ exports.updateStock = async (req, res) => {
       return res.status(404).json({ message: "Product not found" })
     }
 
-    if (stock !== undefined) product.stock = stock
-    if (minStock !== undefined) product.minStock = minStock
+    if (stock !== undefined) product.stock = Number(stock)
+    if (minStock !== undefined) product.minStock = Number(minStock)
 
     await product.save()
 

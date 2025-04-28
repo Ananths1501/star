@@ -1,31 +1,34 @@
 "use client"
 
-import { useState } from "react"
-import { Link, useLocation, useNavigate, Outlet } from "react-router-dom"
+import { useState, useEffect } from "react"
+import { useLocation, useNavigate, Outlet } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import { useTheme } from "./ThemeProvider"
 import { toast } from "react-hot-toast"
-import {
-  LayoutDashboard,
-  Package,
-  ShoppingCart,
-  Wrench,
-  FileText,
-  BarChart,
-  LogOut,
-  Menu,
-  X,
-  Sun,
-  Moon,
-  User,
-} from "lucide-react"
+import { Menu, Bell, Search, User } from "lucide-react"
+import AnimatedSidebar from "./AnimatedSidebar"
+import { ThemeToggle } from "./ThemeToggle"
 
 const AdminLayout = () => {
   const { user, logout } = useAuth()
-  const { theme, toggleTheme } = useTheme()
+  const { theme } = useTheme()
   const location = useLocation()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [pageTitle, setPageTitle] = useState("Dashboard")
+  const [notifications, setNotifications] = useState([
+    { id: 1, message: "New order received", time: "5 min ago" },
+    { id: 2, message: "Low stock alert: LED Bulbs", time: "1 hour ago" },
+    { id: 3, message: "Payment received from John Doe", time: "3 hours ago" },
+  ])
+  const [showNotifications, setShowNotifications] = useState(false)
+
+  useEffect(() => {
+    // Set page title based on current location
+    const path = location.pathname.split("/").pop()
+    const formattedTitle = path.charAt(0).toUpperCase() + path.slice(1)
+    setPageTitle(formattedTitle)
+  }, [location])
 
   const handleLogout = () => {
     logout()
@@ -33,100 +36,96 @@ const AdminLayout = () => {
     navigate("/admin/login")
   }
 
-  const menuItems = [
-    { path: "/admin/dashboard", label: "Dashboard", icon: <LayoutDashboard size={20} /> },
-    { path: "/admin/products", label: "Products", icon: <Package size={20} /> },
-    { path: "/admin/stocks", label: "Stocks", icon: <BarChart size={20} /> },
-    { path: "/admin/services", label: "Services", icon: <Wrench size={20} /> },
-    { path: "/admin/orders", label: "Orders", icon: <ShoppingCart size={20} /> },
-    { path: "/admin/bill", label: "Billing", icon: <FileText size={20} /> },
-  ]
-
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
-      {/* Sidebar */}
-      <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 sidebar-gradient dark:bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } md:relative md:translate-x-0`}
-      >
-        <div className="flex items-center justify-between p-4 border-b border-blue-200 dark:border-gray-700">
-          <h1 className="text-xl font-bold text-blue-800 dark:text-white">Star Electricals</h1>
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="p-2 rounded-md md:hidden hover:bg-blue-100 dark:hover:bg-gray-700"
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        <div className="p-4">
-          <nav className="space-y-2">
-            {menuItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center px-4 py-3 rounded-md transition-colors ${
-                  location.pathname === item.path
-                    ? "bg-gradient-blue text-white"
-                    : "text-blue-800 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-gray-700"
-                }`}
-              >
-                {item.icon}
-                <span className="ml-3">{item.label}</span>
-              </Link>
-            ))}
-          </nav>
-        </div>
-
-        <div className="absolute bottom-0 w-full p-4 border-t border-blue-200 dark:border-gray-700">
-          <button
-            onClick={handleLogout}
-            className="flex items-center w-full px-4 py-3 rounded-md text-blue-800 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-gray-700 transition-colors"
-          >
-            <LogOut size={20} />
-            <span className="ml-3">Logout</span>
-          </button>
-        </div>
-      </div>
+    <div className="flex h-screen overflow-hidden bg-gradient-to-b from-blue-900 via-purple-800 to-red-800 transition-colors duration-300">
+      {/* Animated Sidebar */}
+      <AnimatedSidebar
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+        handleLogout={handleLogout}
+        user={user}
+        theme={theme}
+      />
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="header-gradient dark:bg-gray-800 shadow-sm z-10">
+        <header className="bg-white/10 backdrop-blur-md shadow-lg z-10 transition-all duration-300">
           <div className="flex items-center justify-between p-4">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="p-2 rounded-md md:hidden hover:bg-blue-100 dark:hover:bg-gray-700"
-            >
-              <Menu size={20} />
-            </button>
-
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center">
               <button
-                onClick={toggleTheme}
-                className="p-2 rounded-full hover:bg-blue-100 dark:hover:bg-gray-700"
-                aria-label="Toggle theme"
+                onClick={() => setSidebarOpen(true)}
+                className="p-2 rounded-md md:hidden hover:bg-white/20 transition-colors"
               >
-                {theme === "dark" ? (
-                  <Sun size={20} className="text-yellow-400" />
-                ) : (
-                  <Moon size={20} className="text-blue-800" />
-                )}
+                <Menu size={20} className="text-white" />
               </button>
 
+              <h1 className="ml-4 text-xl font-semibold text-white hidden sm:block">{pageTitle}</h1>
+            </div>
+
+            <div className="relative mx-auto max-w-md w-full px-4 hidden md:block">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/70" size={18} />
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  className="w-full pl-10 pr-4 py-2 rounded-full border border-white/30 focus:outline-none focus:ring-2 focus:ring-white/50 bg-white/10 text-white placeholder-white/70 backdrop-blur-sm transition-all duration-300"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <div className="relative">
+                <button
+                  className="p-2 rounded-full hover:bg-white/20 transition-colors relative"
+                  onClick={() => setShowNotifications(!showNotifications)}
+                >
+                  <Bell size={20} className="text-white" />
+                  <span className="absolute top-0 right-0 h-4 w-4 rounded-full bg-red-500 text-white text-xs flex items-center justify-center">
+                    {notifications.length}
+                  </span>
+                </button>
+
+                {/* Notifications dropdown */}
+                {showNotifications && (
+                  <div className="absolute right-0 mt-2 w-80 bg-white/10 backdrop-blur-md rounded-lg shadow-lg border border-white/20 z-50">
+                    <div className="p-3 border-b border-white/20">
+                      <h3 className="font-medium text-white">Notifications</h3>
+                    </div>
+                    <div className="max-h-80 overflow-y-auto">
+                      {notifications.map((notification) => (
+                        <div
+                          key={notification.id}
+                          className="p-3 border-b border-white/20 hover:bg-white/10 transition-colors"
+                        >
+                          <p className="text-sm text-white">{notification.message}</p>
+                          <p className="text-xs text-white/70 mt-1">{notification.time}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="p-3 text-center">
+                      <button className="text-sm text-white/80 hover:text-white transition-colors">
+                        View all notifications
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <ThemeToggle />
+
               <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-full bg-gradient-blue flex items-center justify-center text-white">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-red-500 flex items-center justify-center text-white">
                   <User size={18} />
                 </div>
-                <span className="font-medium text-blue-800 dark:text-white">{user?.adminId || "Admin"}</span>
+                <span className="font-medium text-white hidden md:block">{user?.adminId || "Admin"}</span>
               </div>
             </div>
           </div>
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 p-4">
+        <main className="flex-1 overflow-y-auto p-4 transition-colors duration-300">
           <Outlet />
         </main>
       </div>

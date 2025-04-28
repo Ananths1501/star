@@ -17,7 +17,7 @@ const app = express()
 app.use(
   cors({
     origin: process.env.FRONTEND_URL || "http://localhost:5173",
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     credentials: true,
   }),
 )
@@ -26,6 +26,7 @@ app.use(express.urlencoded({ extended: true }))
 
 // Serve static files from uploads directory
 app.use("/uploads", express.static(path.join(__dirname, "uploads")))
+
 // Database connection
 mongoose
   .connect(process.env.MONGODB_URI)

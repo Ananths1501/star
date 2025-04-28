@@ -7,35 +7,32 @@ const ThemeContext = createContext({
   toggleTheme: () => {},
 })
 
-export function ThemeProvider({ children, defaultTheme = "light", storageKey = "theme" }) {
-  const [theme, setTheme] = useState(() => {
-    const storedTheme = localStorage.getItem(storageKey)
-    return storedTheme || defaultTheme
-  })
+export const useTheme = () => useContext(ThemeContext)
+
+export const ThemeProvider = ({ children }) => {
+  const [theme, setTheme] = useState("light")
 
   useEffect(() => {
-    const root = window.document.documentElement
-    root.classList.remove("light", "dark")
-    root.classList.add(theme)
-    localStorage.setItem(storageKey, theme)
-  }, [theme, storageKey])
+    // Check if theme is stored in localStorage
+    const storedTheme = localStorage.getItem("theme")
+    if (storedTheme) {
+      setTheme(storedTheme)
+      document.documentElement.classList.toggle("dark", storedTheme === "dark")
+    } else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      // If no stored theme but system prefers dark mode
+      setTheme("dark")
+      document.documentElement.classList.add("dark")
+    }
+  }, [])
 
   const toggleTheme = () => {
-    setTheme(theme === "light" ? "dark" : "light")
+    const newTheme = theme === "light" ? "dark" : "light"
+    setTheme(newTheme)
+    localStorage.setItem("theme", newTheme)
+    document.documentElement.classList.toggle("dark", newTheme === "dark")
   }
 
-  const value = {
-    theme,
-    toggleTheme,
-  }
-
-  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
+  return <ThemeContext.Provider value={{ theme, toggleTheme }}>{children}</ThemeContext.Provider>
 }
 
-export const useTheme = () => {
-  const context = useContext(ThemeContext)
-  if (context === undefined) {
-    throw new Error("useTheme must be used within a ThemeProvider")
-  }
-  return context
-}
+export default ThemeProvider

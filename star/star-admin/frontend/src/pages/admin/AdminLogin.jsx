@@ -41,38 +41,38 @@ const AdminLogin = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-blue dark:bg-gray-900 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-900 via-purple-800 to-red-800 px-4">
       <button
         onClick={toggleTheme}
-        className="absolute top-4 right-4 p-2 rounded-full bg-white/20 hover:bg-white/30 text-white"
+        className="absolute top-4 right-4 p-2 rounded-full bg-white/20 hover:bg-white/30 text-white transition-all duration-300 hover:scale-110 active:scale-95"
         aria-label="Toggle theme"
       >
         {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
       </button>
 
       <div className="w-full max-w-md">
-        <div className="bg-white/90 dark:bg-gray-800 rounded-lg shadow-lg p-8 backdrop-blur-sm">
+        <div className="bg-white/10 backdrop-blur-md rounded-lg shadow-2xl p-8 border border-white/20 animate-float">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-blue mb-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/20 mb-4 shadow-lg">
               <Lock className="h-8 w-8 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-blue-800 dark:text-white">Star Electricals</h1>
-            <p className="text-blue-600 dark:text-gray-400 mt-2">Admin Portal</p>
+            <h1 className="text-2xl font-bold text-white">Star Electricals</h1>
+            <p className="text-white/80 mt-2">Admin Portal</p>
           </div>
 
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
-              <label htmlFor="adminId" className="block text-sm font-medium text-blue-700 dark:text-gray-300 mb-1">
+              <label htmlFor="adminId" className="block text-sm font-medium text-white/80 mb-1">
                 Admin ID
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-5 w-5 text-blue-400" />
+                  <User className="h-5 w-5 text-white/60" />
                 </div>
                 <input
                   id="adminId"
                   type="text"
-                  className="block w-full pl-10 pr-3 py-2 border border-blue-300 dark:border-gray-600 rounded-md shadow-sm placeholder-blue-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                  className="block w-full pl-10 pr-3 py-2 border border-white/30 rounded-md shadow-lg placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 bg-white/10 text-white backdrop-blur-sm transition-all duration-300"
                   value={adminId}
                   onChange={(e) => setAdminId(e.target.value)}
                   placeholder="Enter your admin ID"
@@ -82,17 +82,17 @@ const AdminLogin = () => {
             </div>
 
             <div className="mb-6">
-              <label htmlFor="password" className="block text-sm font-medium text-blue-700 dark:text-gray-300 mb-1">
+              <label htmlFor="password" className="block text-sm font-medium text-white/80 mb-1">
                 Password
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-blue-400" />
+                  <Lock className="h-5 w-5 text-white/60" />
                 </div>
                 <input
                   id="password"
                   type="password"
-                  className="block w-full pl-10 pr-3 py-2 border border-blue-300 dark:border-gray-600 rounded-md shadow-sm placeholder-blue-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                  className="block w-full pl-10 pr-3 py-2 border border-white/30 rounded-md shadow-lg placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 bg-white/10 text-white backdrop-blur-sm transition-all duration-300"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
@@ -103,7 +103,7 @@ const AdminLogin = () => {
 
             <button
               type="submit"
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white btn-gradient-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-lg text-sm font-medium text-white bg-gradient-to-r from-blue-600 via-purple-600 to-red-600 hover:from-blue-700 hover:via-purple-700 hover:to-red-700 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-300 hover:shadow-xl hover:scale-105 active:scale-95"
               disabled={isLoading}
             >
               {isLoading ? (

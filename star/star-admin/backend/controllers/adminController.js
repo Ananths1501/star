@@ -53,21 +53,21 @@ exports.getDashboardData = async (req, res) => {
     // Format sales data for chart
     const formattedSalesData = salesData.map((item) => ({
       date: `${item._id.year}-${item._id.month.toString().padStart(2, "0")}-${item._id.day.toString().padStart(2, "0")}`,
-      sales: item.totalSales,
-      orders: item.count,
+      sales: item.totalSales || 0,
+      orders: item.count || 0,
     }))
 
     res.json({
       counts: {
-        products: productCount,
-        orders: orderCount,
-        services: serviceCount,
-        workers: workerCount,
-        admins: adminCount,
+        products: productCount || 0,
+        orders: orderCount || 0,
+        services: serviceCount || 0,
+        workers: workerCount || 0,
+        admins: adminCount || 0,
       },
-      lowStockProducts,
-      recentOrders,
-      salesData: formattedSalesData,
+      lowStockProducts: lowStockProducts || [],
+      recentOrders: recentOrders || [],
+      salesData: formattedSalesData || [],
     })
   } catch (error) {
     console.error("Dashboard data error:", error)

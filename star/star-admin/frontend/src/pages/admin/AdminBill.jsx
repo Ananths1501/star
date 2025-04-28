@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Search, ShoppingBag, Printer } from "lucide-react"
+import { Search, ShoppingBag, Printer, AlertCircle } from "lucide-react"
 import { toast } from "react-hot-toast"
 import api from "../../utils/api"
 import jsPDF from "jspdf"
@@ -16,6 +16,7 @@ const AdminBill = () => {
   const [paymentMethod, setPaymentMethod] = useState("Cash")
   const [isLoading, setIsLoading] = useState(true)
   const [isPrinting, setIsPrinting] = useState(false)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     fetchProducts()
@@ -38,11 +39,13 @@ const AdminBill = () => {
   const fetchProducts = async () => {
     try {
       setIsLoading(true)
+      setError(null)
       const response = await api.get("/products")
       setProducts(response.data)
       setFilteredProducts(response.data)
     } catch (error) {
       console.error("Error fetching products:", error)
+      setError("Failed to load products. Please try again.")
       toast.error("Failed to load products")
     } finally {
       setIsLoading(false)
@@ -112,8 +115,24 @@ const AdminBill = () => {
     }
 
     setIsPrinting(true)
+    setError(null)
 
     try {
+      // Prepare items for API
+      const orderItems = billItems.map((item) => ({
+        product: item._id,
+        quantity: item.quantity,
+        price: item.price,
+        discount: item.discount,
+      }))
+
+      // Create the order for inventory tracking first
+      const orderResponse = await api.post("/orders/bill", {
+        items: orderItems,
+        customer: customerName,
+        paymentMethod: paymentMethod,
+      })
+
       // Create PDF
       const doc = new jsPDF()
 
@@ -131,7 +150,9 @@ const AdminBill = () => {
 
       const currentDate = new Date()
       const formattedDate = currentDate.toLocaleDateString()
-      const billNumber = `BILL-${currentDate.getFullYear()}${(currentDate.getMonth() + 1).toString().padStart(2, "0")}${currentDate.getDate().toString().padStart(2, "0")}-${Date.now().toString().substring(8)}`
+      const billNumber =
+        orderResponse.data.order.orderNumber ||
+        `BILL-${currentDate.getFullYear()}${(currentDate.getMonth() + 1).toString().padStart(2, "0")}${currentDate.getDate().toString().padStart(2, "0")}-${Date.now().toString().substring(8)}`
 
       doc.setFontSize(10)
       doc.text(`Date: ${formattedDate}`, 15, 55)
@@ -159,7 +180,7 @@ const AdminBill = () => {
         startY: 75,
         theme: "grid",
         styles: { fontSize: 8 },
-        headStyles: { fillColor: [3, 169, 244] }, // Light Blue
+        headStyles: { fillColor: [30, 58, 138] }, // Dark blue from gradient
       })
 
       // Add total
@@ -173,48 +194,19 @@ const AdminBill = () => {
       // Save PDF
       doc.save(`Star_Electricals_Bill_${billNumber}.pdf`)
 
-      // Create bill and order in database
-      try {
-        // Prepare items for API
-        const orderItems = billItems.map((item) => ({
-          product: item._id,
-          quantity: item.quantity,
-          price: item.price,
-          discount: item.discount,
-        }))
+      toast.success("Bill created and saved successfully")
 
-        // First create the bill
-        const billResponse = await api.post("/bills", {
-          items: orderItems,
-          customer: customerName,
-          paymentMethod: paymentMethod,
-        })
+      // Clear bill items
+      setBillItems([])
+      setCustomerName("Walk-in Customer")
+      setPaymentMethod("Cash")
 
-        // Then create the order for inventory tracking
-        const orderResponse = await api.post("/orders/bill", {
-          items: orderItems,
-          customer: customerName,
-          paymentMethod: paymentMethod,
-        })
-
-        toast.success("Bill created and saved successfully")
-
-        // Clear bill items
-        setBillItems([])
-        setCustomerName("Walk-in Customer")
-        setPaymentMethod("Cash")
-
-        // Refresh products to get updated stock
-        fetchProducts()
-      } catch (error) {
-        console.error("Error saving bill:", error)
-        toast.error(
-          "Bill PDF created but failed to save in database: " + (error.response?.data?.message || error.message),
-        )
-      }
+      // Refresh products to get updated stock
+      fetchProducts()
     } catch (error) {
       console.error("Error creating bill:", error)
-      toast.error("Failed to create bill: " + (error.message || "Unknown error"))
+      setError("Failed to create bill. Please check if all items are in stock and try again.")
+      toast.error(`Failed to create bill: ${error.response?.data?.message || "Server error"}`)
     } finally {
       setIsPrinting(false)
     }
@@ -222,41 +214,48 @@ const AdminBill = () => {
 
   return (
     <div className="container mx-auto">
-      <h1 className="text-2xl font-bold mb-6 text-blue-800 dark:text-white">Create Bill</h1>
+      <h1 className="text-2xl font-bold mb-6 text-white">Create Bill</h1>
+
+      {error && (
+        <div className="mb-6 bg-red-500/20 backdrop-blur-sm border border-red-500/50 rounded-lg p-4 text-white flex items-center">
+          <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0" />
+          <p>{error}</p>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Left Side - Products */}
-        <div className="md:col-span-2 bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+        <div className="md:col-span-2 bg-white/10 backdrop-blur-md rounded-lg shadow-lg border border-white/20 p-4">
           <div className="mb-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400" size={18} />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/70" size={18} />
               <input
                 type="text"
                 placeholder="Search products by name, brand, or type..."
                 value={searchTerm}
                 onChange={handleSearch}
-                className="w-full pl-10 pr-3 py-2 border border-blue-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                className="w-full pl-10 pr-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white placeholder-white/70 backdrop-blur-sm transition-all duration-300"
               />
             </div>
           </div>
 
           <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-blue-700 dark:text-gray-300 mb-1">Customer Name</label>
+              <label className="block text-sm font-medium text-white mb-1">Customer Name</label>
               <input
                 type="text"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
-                className="w-full px-3 py-2 border border-blue-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                className="w-full px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white placeholder-white/70 backdrop-blur-sm"
                 placeholder="Enter customer name"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-blue-700 dark:text-gray-300 mb-1">Payment Method</label>
+              <label className="block text-sm font-medium text-white mb-1">Payment Method</label>
               <select
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value)}
-                className="w-full px-3 py-2 border border-blue-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                className="w-full px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white backdrop-blur-sm"
               >
                 <option value="Cash">Cash</option>
                 <option value="Card">Card</option>
@@ -268,18 +267,16 @@ const AdminBill = () => {
 
           {isLoading ? (
             <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
             </div>
           ) : filteredProducts.length === 0 ? (
-            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-              No products found matching your search.
-            </div>
+            <div className="text-center py-8 text-white/70">No products found matching your search.</div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 max-h-[600px] overflow-y-auto p-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 max-h-[calc(100vh-300px)] overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-white/50 scrollbar-track-white/10">
               {filteredProducts.map((product) => (
                 <div
                   key={product._id}
-                  className={`bg-white dark:bg-gray-700 border border-blue-200 dark:border-gray-600 rounded-lg shadow-sm hover:shadow-md transition-shadow ${product.stock <= 0 ? "opacity-50" : "cursor-pointer"}`}
+                  className={`bg-white/10 backdrop-blur-md border border-white/20 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 ${product.stock <= 0 ? "opacity-50" : "cursor-pointer hover:translate-y-[-5px]"}`}
                   onClick={() => product.stock > 0 && addToBill(product)}
                 >
                   <div className="p-3 flex flex-col h-full">
@@ -290,28 +287,26 @@ const AdminBill = () => {
                         className="w-12 h-12 object-cover rounded-md mr-3"
                       />
                       <div>
-                        <h3 className="font-medium text-sm text-blue-800 dark:text-white">{product.name}</h3>
-                        <p className="text-xs text-blue-600 dark:text-gray-400">{product.brand}</p>
+                        <h3 className="font-medium text-sm text-white">{product.name}</h3>
+                        <p className="text-xs text-white/70">{product.brand}</p>
                       </div>
                     </div>
                     <div className="mt-auto flex justify-between items-center">
                       <div>
-                        <span className="font-bold text-blue-600 dark:text-blue-400">
+                        <span className="font-bold text-white">
                           ₹{(product.price * (1 - product.discount / 100)).toFixed(2)}
                         </span>
                         {product.discount > 0 && (
-                          <span className="ml-1 text-xs text-gray-500 dark:text-gray-400 line-through">
-                            ₹{product.price.toFixed(2)}
-                          </span>
+                          <span className="ml-1 text-xs text-white/50 line-through">₹{product.price.toFixed(2)}</span>
                         )}
                       </div>
                       <span
                         className={`text-xs px-2 py-1 rounded-full ${
                           product.stock <= 0
-                            ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+                            ? "bg-red-500/30 text-white"
                             : product.stock <= product.minStock
-                              ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300"
-                              : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                              ? "bg-yellow-500/30 text-white"
+                              : "bg-green-500/30 text-white"
                         }`}
                       >
                         Stock: {product.stock}
@@ -326,38 +321,38 @@ const AdminBill = () => {
 
         {/* Right Side - Bill */}
         <div className="md:col-span-1">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sticky top-20">
-            <h2 className="text-lg font-semibold mb-4 flex items-center text-blue-800 dark:text-white">
+          <div className="bg-white/10 backdrop-blur-md rounded-lg shadow-lg border border-white/20 p-4 sticky top-20">
+            <h2 className="text-lg font-semibold mb-4 flex items-center text-white">
               <ShoppingBag size={20} className="mr-2" /> Bill Items
             </h2>
 
             {billItems.length === 0 ? (
-              <div className="text-center py-8 text-gray-500 dark:text-gray-400">No items added to bill yet.</div>
+              <div className="text-center py-8 text-white/70">No items added to bill yet.</div>
             ) : (
-              <div className="mb-4 max-h-[400px] overflow-y-auto">
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                  <thead className="bg-blue-50 dark:bg-gray-700">
+              <div className="mb-4 max-h-[calc(100vh-350px)] overflow-y-auto scrollbar-thin scrollbar-thumb-white/50 scrollbar-track-white/10">
+                <table className="min-w-full divide-y divide-white/20">
+                  <thead className="bg-white/5">
                     <tr>
-                      <th className="px-2 py-2 text-left text-xs font-medium text-blue-700 dark:text-gray-400 uppercase tracking-wider">
+                      <th className="px-2 py-2 text-left text-xs font-medium text-white/70 uppercase tracking-wider">
                         Item
                       </th>
-                      <th className="px-2 py-2 text-left text-xs font-medium text-blue-700 dark:text-gray-400 uppercase tracking-wider">
+                      <th className="px-2 py-2 text-left text-xs font-medium text-white/70 uppercase tracking-wider">
                         Qty
                       </th>
-                      <th className="px-2 py-2 text-left text-xs font-medium text-blue-700 dark:text-gray-400 uppercase tracking-wider">
+                      <th className="px-2 py-2 text-left text-xs font-medium text-white/70 uppercase tracking-wider">
                         Price
                       </th>
-                      <th className="px-2 py-2 text-left text-xs font-medium text-blue-700 dark:text-gray-400 uppercase tracking-wider">
+                      <th className="px-2 py-2 text-left text-xs font-medium text-white/70 uppercase tracking-wider">
                         Total
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                  <tbody className="bg-white/5 divide-y divide-white/20">
                     {billItems.map((item) => (
                       <tr key={item._id}>
                         <td className="px-2 py-3 whitespace-nowrap">
-                          <div className="text-sm font-medium text-blue-800 dark:text-white">{item.name}</div>
-                          <div className="text-xs text-blue-600 dark:text-gray-400">{item.brand}</div>
+                          <div className="text-sm font-medium text-white">{item.name}</div>
+                          <div className="text-xs text-white/70">{item.brand}</div>
                         </td>
                         <td className="px-2 py-3 whitespace-nowrap">
                           <input
@@ -365,16 +360,16 @@ const AdminBill = () => {
                             min="0"
                             value={item.quantity}
                             onChange={(e) => updateQuantity(item._id, e.target.value)}
-                            className="w-12 p-1 text-sm border border-blue-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
+                            className="w-12 p-1 text-sm border border-white/30 rounded-md bg-white/10 text-white"
                           />
                         </td>
                         <td className="px-2 py-3 whitespace-nowrap">
-                          <div className="text-sm text-blue-700 dark:text-gray-300">
+                          <div className="text-sm text-white">
                             ₹{(item.price * (1 - item.discount / 100)).toFixed(2)}
                           </div>
-                          {item.discount > 0 && <div className="text-xs text-red-500">-{item.discount}%</div>}
+                          {item.discount > 0 && <div className="text-xs text-red-300">-{item.discount}%</div>}
                         </td>
-                        <td className="px-2 py-3 whitespace-nowrap text-sm font-medium text-blue-800 dark:text-white">
+                        <td className="px-2 py-3 whitespace-nowrap text-sm font-medium text-white">
                           ₹{calculateItemTotal(item).toFixed(2)}
                         </td>
                       </tr>
@@ -384,8 +379,8 @@ const AdminBill = () => {
               </div>
             )}
 
-            <div className="border-t border-blue-200 dark:border-gray-700 pt-4 mb-4">
-              <div className="flex justify-between font-bold text-blue-800 dark:text-white">
+            <div className="border-t border-white/20 pt-4 mb-4">
+              <div className="flex justify-between font-bold text-white">
                 <span>Total Amount:</span>
                 <span>₹{calculateTotal().toFixed(2)}</span>
               </div>
@@ -394,7 +389,7 @@ const AdminBill = () => {
             <button
               onClick={handlePrint}
               disabled={billItems.length === 0 || isPrinting}
-              className="w-full py-2 px-4 btn-gradient-blue text-white rounded-md transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-2 px-4 bg-gradient-to-r from-blue-600 via-purple-600 to-red-600 hover:from-blue-700 hover:via-purple-700 hover:to-red-700 text-white rounded-md transition-all duration-300 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:-translate-y-1 active:translate-y-0"
             >
               {isPrinting ? (
                 <>

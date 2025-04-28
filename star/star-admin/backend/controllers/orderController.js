@@ -102,6 +102,7 @@ exports.createBill = async (req, res) => {
     const orderItems = []
 
     for (const item of items) {
+      // Find product by ID
       const product = await Product.findById(item.product)
 
       if (!product) {
@@ -130,8 +131,17 @@ exports.createBill = async (req, res) => {
       await product.save()
     }
 
+    // Generate a unique order number
+    const currentDate = new Date()
+    const year = currentDate.getFullYear().toString().slice(-2)
+    const month = (currentDate.getMonth() + 1).toString().padStart(2, "0")
+    const day = currentDate.getDate().toString().padStart(2, "0")
+    const orderCount = await Order.countDocuments()
+    const orderNumber = `ORD-${year}${month}${day}-${(orderCount + 1).toString().padStart(4, "0")}`
+
     // Create order without user (for walk-in customers)
     const order = new Order({
+      orderNumber,
       items: orderItems,
       totalAmount,
       status: "Completed",

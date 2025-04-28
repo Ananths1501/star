@@ -12,8 +12,8 @@ exports.verifyToken = async (req, res, next) => {
     }
 
     // For testing purposes, accept any token and set a default admin
+    // This is the part that was causing the error - we're using adminId instead of _id
     req.admin = {
-      _id: "admin-id",
       adminId: "admin",
       name: "Admin User",
       email: "admin@example.com",

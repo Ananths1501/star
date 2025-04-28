@@ -2,7 +2,19 @@
 
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
-import { Package, ShoppingCart, Users, Wrench, AlertTriangle, ArrowUpRight, BarChart3 } from "lucide-react"
+import {
+  Package,
+  ShoppingCart,
+  Users,
+  Wrench,
+  AlertTriangle,
+  ArrowUpRight,
+  BarChart3,
+  TrendingUp,
+  Clock,
+  AlertCircle,
+  RefreshCw,
+} from "lucide-react"
 import { toast } from "react-hot-toast"
 import api from "../../utils/api"
 
@@ -21,6 +33,9 @@ const AdminDashboard = () => {
     salesData: [],
   })
   const [isLoading, setIsLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [timeframe, setTimeframe] = useState("weekly")
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     fetchDashboardData()
@@ -29,116 +44,161 @@ const AdminDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setIsLoading(true)
+      setError(null)
       const response = await api.get("/admin/dashboard")
       setDashboardData(response.data)
     } catch (error) {
       console.error("Error fetching dashboard data:", error)
+      setError("Failed to load dashboard data. Please try refreshing.")
       toast.error("Failed to load dashboard data")
     } finally {
       setIsLoading(false)
+      setIsRefreshing(false)
     }
+  }
+
+  const handleRefresh = () => {
+    setIsRefreshing(true)
+    fetchDashboardData()
   }
 
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-full">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
       </div>
     )
   }
 
   return (
-    <div className="container mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-blue-800 dark:text-white">Dashboard</h1>
-        <p className="text-blue-600 dark:text-gray-400">Welcome to Star Electricals Admin Portal</p>
+    <div className="container mx-auto animate-fade-in">
+      <div className="mb-6 flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Dashboard</h1>
+          <p className="text-white/80">Welcome to Star Electricals Admin Portal</p>
+        </div>
+        <button
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+          className="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-md text-white hover:bg-white/20 transition-all duration-300 disabled:opacity-50"
+        >
+          {isRefreshing ? <RefreshCw className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+          Refresh
+        </button>
       </div>
+
+      {error && (
+        <div className="mb-6 bg-red-500/20 backdrop-blur-sm border border-red-500/50 rounded-lg p-4 text-white flex items-center">
+          <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0" />
+          <p>{error}</p>
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
           title="Total Products"
           value={dashboardData.counts.products}
-          icon={<Package className="text-blue-500" />}
+          icon={<Package className="text-white" />}
           linkTo="/admin/products"
+          className="animate-slide-up delay-100"
+          trend="+5% from last week"
+          trendUp={true}
         />
         <StatCard
           title="Total Orders"
           value={dashboardData.counts.orders}
-          icon={<ShoppingCart className="text-green-500" />}
+          icon={<ShoppingCart className="text-white" />}
           linkTo="/admin/orders"
+          className="animate-slide-up delay-200"
+          trend="+12% from last week"
+          trendUp={true}
         />
         <StatCard
           title="Total Services"
           value={dashboardData.counts.services}
-          icon={<Wrench className="text-orange-500" />}
+          icon={<Wrench className="text-white" />}
           linkTo="/admin/services"
+          className="animate-slide-up delay-300"
+          trend="+3% from last week"
+          trendUp={true}
         />
         <StatCard
           title="Total Workers"
           value={dashboardData.counts.workers}
-          icon={<Users className="text-purple-500" />}
+          icon={<Users className="text-white" />}
+          className="animate-slide-up delay-400"
+          trend="No change"
+          trendUp={null}
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Low Stock Products */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="bg-white/10 backdrop-blur-md rounded-lg shadow-lg border border-white/20 p-6 animate-slide-up delay-200 hover:shadow-xl transition-all duration-300 hover:translate-y-[-5px]">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-blue-800 dark:text-white">Low Stock Products</h2>
-            <Link to="/admin/stocks" className="text-blue-600 hover:underline text-sm flex items-center">
+            <h2 className="text-lg font-semibold text-white flex items-center">
+              <AlertTriangle className="mr-2 h-5 w-5 text-white/80" />
+              Low Stock Products
+            </h2>
+            <Link
+              to="/admin/stocks"
+              className="text-white/80 hover:text-white text-sm flex items-center transition-colors"
+            >
               View All <ArrowUpRight className="ml-1 h-4 w-4" />
             </Link>
           </div>
 
-          {dashboardData.lowStockProducts.length === 0 ? (
-            <p className="text-blue-600 dark:text-gray-400">No products with low stock</p>
+          {dashboardData.lowStockProducts && dashboardData.lowStockProducts.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 text-white/60">
+              <Package className="h-12 w-12 mb-3 opacity-50" />
+              <p>No products with low stock</p>
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full">
                 <thead>
-                  <tr className="border-b border-blue-200 dark:border-gray-700">
-                    <th className="py-2 px-3 text-left text-xs font-medium text-blue-700 dark:text-gray-400 uppercase tracking-wider">
+                  <tr className="border-b border-white/20">
+                    <th className="py-2 px-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                       Product
                     </th>
-                    <th className="py-2 px-3 text-left text-xs font-medium text-blue-700 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="py-2 px-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                       Stock
                     </th>
-                    <th className="py-2 px-3 text-left text-xs font-medium text-blue-700 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="py-2 px-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                       Min Stock
                     </th>
-                    <th className="py-2 px-3 text-left text-xs font-medium text-blue-700 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="py-2 px-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                       Status
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-blue-200 dark:divide-gray-700">
-                  {dashboardData.lowStockProducts.map((product) => (
-                    <tr key={product._id}>
-                      <td className="py-3 px-3 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <img
-                            src={product.image || "/placeholder.svg?height=40&width=40"}
-                            alt={product.name}
-                            className="w-8 h-8 object-cover rounded mr-2"
-                          />
-                          <div>
-                            <div className="font-medium text-blue-800 dark:text-white">{product.name}</div>
-                            <div className="text-xs text-blue-600 dark:text-gray-400">{product.brand}</div>
+                <tbody className="divide-y divide-white/10">
+                  {dashboardData.lowStockProducts &&
+                    dashboardData.lowStockProducts.map((product) => (
+                      <tr key={product._id} className="hover:bg-white/5 transition-colors">
+                        <td className="py-3 px-3 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <img
+                              src={product.image || "/placeholder.svg?height=40&width=40"}
+                              alt={product.name}
+                              className="w-8 h-8 object-cover rounded-md mr-2"
+                            />
+                            <div>
+                              <div className="font-medium text-white">{product.name}</div>
+                              <div className="text-xs text-white/60">{product.brand}</div>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="py-3 px-3 whitespace-nowrap text-blue-700 dark:text-gray-300">{product.stock}</td>
-                      <td className="py-3 px-3 whitespace-nowrap text-blue-700 dark:text-gray-300">
-                        {product.minStock}
-                      </td>
-                      <td className="py-3 px-3 whitespace-nowrap">
-                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">
-                          <AlertTriangle className="mr-1 h-4 w-4" /> Low Stock
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td className="py-3 px-3 whitespace-nowrap text-white/80">{product.stock}</td>
+                        <td className="py-3 px-3 whitespace-nowrap text-white/80">{product.minStock}</td>
+                        <td className="py-3 px-3 whitespace-nowrap">
+                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-500/30 text-white">
+                            <AlertTriangle className="mr-1 h-4 w-4" /> Low Stock
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
                 </tbody>
               </table>
             </div>
@@ -146,72 +206,82 @@ const AdminDashboard = () => {
         </div>
 
         {/* Recent Orders */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="bg-white/10 backdrop-blur-md rounded-lg shadow-lg border border-white/20 p-6 animate-slide-up delay-300 hover:shadow-xl transition-all duration-300 hover:translate-y-[-5px]">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-blue-800 dark:text-white">Recent Orders</h2>
-            <Link to="/admin/orders" className="text-blue-600 hover:underline text-sm flex items-center">
+            <h2 className="text-lg font-semibold text-white flex items-center">
+              <Clock className="mr-2 h-5 w-5 text-white/80" />
+              Recent Orders
+            </h2>
+            <Link
+              to="/admin/orders"
+              className="text-white/80 hover:text-white text-sm flex items-center transition-colors"
+            >
               View All <ArrowUpRight className="ml-1 h-4 w-4" />
             </Link>
           </div>
 
-          {dashboardData.recentOrders.length === 0 ? (
-            <p className="text-blue-600 dark:text-gray-400">No recent orders</p>
+          {dashboardData.recentOrders && dashboardData.recentOrders.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 text-white/60">
+              <ShoppingCart className="h-12 w-12 mb-3 opacity-50" />
+              <p>No recent orders</p>
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full">
                 <thead>
-                  <tr className="border-b border-blue-200 dark:border-gray-700">
-                    <th className="py-2 px-3 text-left text-xs font-medium text-blue-700 dark:text-gray-400 uppercase tracking-wider">
+                  <tr className="border-b border-white/20">
+                    <th className="py-2 px-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                       Order ID
                     </th>
-                    <th className="py-2 px-3 text-left text-xs font-medium text-blue-700 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="py-2 px-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                       Customer
                     </th>
-                    <th className="py-2 px-3 text-left text-xs font-medium text-blue-700 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="py-2 px-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                       Amount
                     </th>
-                    <th className="py-2 px-3 text-left text-xs font-medium text-blue-700 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="py-2 px-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
                       Status
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-blue-200 dark:divide-gray-700">
-                  {dashboardData.recentOrders.map((order) => (
-                    <tr key={order._id}>
-                      <td className="py-3 px-3 whitespace-nowrap">
-                        <div className="text-sm font-medium text-blue-800 dark:text-white">
-                          {order.orderNumber || order._id.substring(0, 8)}
-                        </div>
-                      </td>
-                      <td className="py-3 px-3 whitespace-nowrap">
-                        <div className="text-sm text-blue-700 dark:text-gray-300">
-                          {order.user ? order.user.name : order.customer || "Walk-in Customer"}
-                        </div>
-                      </td>
-                      <td className="py-3 px-3 whitespace-nowrap">
-                        <div className="text-sm font-medium text-blue-800 dark:text-white">
-                          ₹{order.totalAmount.toFixed(2)}
-                        </div>
-                      </td>
-                      <td className="py-3 px-3 whitespace-nowrap">
-                        <span
-                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            order.status === "Pending"
-                              ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300"
-                              : order.status === "Processing"
-                                ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
-                                : order.status === "Shipped"
-                                  ? "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
-                                  : order.status === "Delivered"
-                                    ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
-                                    : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
-                          }`}
-                        >
-                          {order.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                <tbody className="divide-y divide-white/10">
+                  {dashboardData.recentOrders &&
+                    dashboardData.recentOrders.map((order) => (
+                      <tr key={order._id} className="hover:bg-white/5 transition-colors">
+                        <td className="py-3 px-3 whitespace-nowrap">
+                          <div className="text-sm font-medium text-white">
+                            {order.orderNumber || order._id.substring(0, 8)}
+                          </div>
+                        </td>
+                        <td className="py-3 px-3 whitespace-nowrap">
+                          <div className="text-sm text-white/80">
+                            {order.user ? order.user.name : order.customer || "Walk-in Customer"}
+                          </div>
+                        </td>
+                        <td className="py-3 px-3 whitespace-nowrap">
+                          <div className="text-sm font-medium text-white">
+                            ₹{order.totalAmount?.toFixed(2) || "0.00"}
+                          </div>
+                        </td>
+                        <td className="py-3 px-3 whitespace-nowrap">
+                          <span
+                            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                              order.status === "Pending"
+                                ? "bg-yellow-500/30 text-white"
+                                : order.status === "Processing"
+                                  ? "bg-blue-500/30 text-white"
+                                  : order.status === "Shipped"
+                                    ? "bg-purple-500/30 text-white"
+                                    : order.status === "Delivered"
+                                      ? "bg-green-500/30 text-white"
+                                      : "bg-red-500/30 text-white"
+                            }`}
+                          >
+                            {order.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
                 </tbody>
               </table>
             </div>
@@ -220,9 +290,36 @@ const AdminDashboard = () => {
       </div>
 
       {/* Sales Overview Chart */}
-      <div className="mt-6">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold mb-4 text-blue-800 dark:text-white">Sales Overview</h2>
+      <div className="mt-6 animate-slide-up delay-400">
+        <div className="bg-white/10 backdrop-blur-md rounded-lg shadow-lg border border-white/20 p-6 hover:shadow-xl transition-all duration-300 hover:translate-y-[-5px]">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold text-white flex items-center">
+              <TrendingUp className="mr-2 h-5 w-5 text-white/80" />
+              Sales Overview
+            </h2>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setTimeframe("weekly")}
+                className={`px-3 py-1 text-xs rounded-full transition-colors ${
+                  timeframe === "weekly"
+                    ? "bg-white/20 text-white"
+                    : "bg-white/10 text-white/80 hover:bg-white/15 hover:text-white"
+                }`}
+              >
+                Weekly
+              </button>
+              <button
+                onClick={() => setTimeframe("monthly")}
+                className={`px-3 py-1 text-xs rounded-full transition-colors ${
+                  timeframe === "monthly"
+                    ? "bg-white/20 text-white"
+                    : "bg-white/10 text-white/80 hover:bg-white/15 hover:text-white"
+                }`}
+              >
+                Monthly
+              </button>
+            </div>
+          </div>
           {dashboardData.salesData && dashboardData.salesData.length > 0 ? (
             <div className="h-64">
               {/* Chart would go here - simplified for this example */}
@@ -230,12 +327,12 @@ const AdminDashboard = () => {
                 {dashboardData.salesData.slice(-7).map((item, index) => (
                   <div key={index} className="flex flex-col items-center">
                     <div
-                      className="bg-gradient-blue w-full rounded-t-md"
+                      className="bg-gradient-to-t from-red-500 via-purple-500 to-blue-500 w-full rounded-t-md transition-all duration-500 hover:shadow-lg hover:scale-105"
                       style={{
-                        height: `${Math.max(20, (item.sales / Math.max(...dashboardData.salesData.map((d) => d.sales))) * 100)}%`,
+                        height: `${Math.max(20, (item.sales / Math.max(...dashboardData.salesData.map((d) => d.sales || 0))) * 100)}%`,
                       }}
                     ></div>
-                    <div className="text-xs mt-2 text-blue-600 dark:text-gray-400">
+                    <div className="text-xs mt-2 text-white/80">
                       {new Date(item.date).toLocaleDateString(undefined, { weekday: "short" })}
                     </div>
                   </div>
@@ -244,8 +341,8 @@ const AdminDashboard = () => {
             </div>
           ) : (
             <div className="h-64 flex items-center justify-center">
-              <BarChart3 size={64} className="text-blue-300" />
-              <p className="ml-4 text-blue-500">No sales data available</p>
+              <BarChart3 size={64} className="text-white/30" />
+              <p className="ml-4 text-white/60">No sales data available</p>
             </div>
           )}
         </div>
@@ -254,19 +351,32 @@ const AdminDashboard = () => {
   )
 }
 
-const StatCard = ({ title, value, icon, linkTo }) => {
+const StatCard = ({ title, value, icon, linkTo, className, trend, trendUp }) => {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+    <div
+      className={`bg-white/10 backdrop-blur-md rounded-lg shadow-lg border border-white/20 p-6 hover:shadow-xl transition-all duration-300 hover:translate-y-[-5px] ${className}`}
+    >
       <div className="flex justify-between items-center">
         <div>
-          <p className="text-sm text-blue-600 dark:text-gray-400">{title}</p>
-          <p className="text-2xl font-bold mt-1 text-blue-800 dark:text-white">{value}</p>
+          <p className="text-sm text-white/80">{title}</p>
+          <p className="text-2xl font-bold mt-1 text-white">{value}</p>
+          {trend && (
+            <p
+              className={`text-xs mt-1 flex items-center ${
+                trendUp === true ? "text-green-400" : trendUp === false ? "text-red-400" : "text-white/60"
+              }`}
+            >
+              {trendUp === true && <TrendingUp className="h-3 w-3 mr-1" />}
+              {trendUp === false && <TrendingUp className="h-3 w-3 mr-1 transform rotate-180" />}
+              {trend}
+            </p>
+          )}
         </div>
-        <div className="text-3xl">{icon}</div>
+        <div className="text-3xl bg-white/10 p-3 rounded-lg">{icon}</div>
       </div>
       {linkTo && (
         <div className="mt-4">
-          <Link to={linkTo} className="text-sm text-blue-600 hover:underline flex items-center">
+          <Link to={linkTo} className="text-sm text-white/80 hover:text-white transition-colors flex items-center">
             View Details <ArrowUpRight className="ml-1 h-4 w-4" />
           </Link>
         </div>
