@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Edit, Filter, ArrowUp, ArrowDown, X, Check, AlertCircle, RefreshCw } from "lucide-react"
+import { Edit, Filter, ArrowUp, ArrowDown, X, Check, AlertCircle, RefreshCw, Search } from "lucide-react"
 import { toast } from "react-hot-toast"
 import api from "../../utils/api"
 
@@ -17,6 +17,8 @@ const AdminStocks = () => {
   const [filters, setFilters] = useState({
     type: "",
     brand: "",
+    name: "",
+    lowStock: false,
     sortBy: "name",
     order: "asc",
   })
@@ -67,6 +69,16 @@ const AdminStocks = () => {
       result = result.filter((p) => p.brand === filters.brand)
     }
 
+    // Apply name filter
+    if (filters.name) {
+      result = result.filter((p) => p.name.toLowerCase().includes(filters.name.toLowerCase()))
+    }
+
+    // Apply low stock filter
+    if (filters.lowStock) {
+      result = result.filter((p) => p.stock <= p.minStock)
+    }
+
     // Apply sorting
     result.sort((a, b) => {
       let valueA, valueB
@@ -102,6 +114,8 @@ const AdminStocks = () => {
     setFilters({
       type: "",
       brand: "",
+      name: "",
+      lowStock: false,
       sortBy: "name",
       order: "asc",
     })
@@ -214,9 +228,11 @@ const AdminStocks = () => {
                 onChange={(e) => setFilters((prev) => ({ ...prev, type: e.target.value }))}
                 className="w-full px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white backdrop-blur-sm"
               >
-                <option value="">All Types</option>
+                <option value="" className="bg-blue-900 text-white">
+                  All Types
+                </option>
                 {types.map((type) => (
-                  <option key={type} value={type}>
+                  <option key={type} value={type} className="bg-blue-900 text-white">
                     {type}
                   </option>
                 ))}
@@ -229,21 +245,44 @@ const AdminStocks = () => {
                 onChange={(e) => setFilters((prev) => ({ ...prev, brand: e.target.value }))}
                 className="w-full px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white backdrop-blur-sm"
               >
-                <option value="">All Brands</option>
+                <option value="" className="bg-blue-900 text-white">
+                  All Brands
+                </option>
                 {brands.map((brand) => (
-                  <option key={brand} value={brand}>
+                  <option key={brand} value={brand} className="bg-blue-900 text-white">
                     {brand}
                   </option>
                 ))}
               </select>
             </div>
 
-            <div>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/70" size={18} />
+              <input
+                type="text"
+                placeholder="Search by name..."
+                value={filters.name}
+                onChange={(e) => setFilters((prev) => ({ ...prev, name: e.target.value }))}
+                className="w-full pl-10 pr-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white placeholder-white/70 backdrop-blur-sm"
+              />
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <label className="flex items-center space-x-2 text-white cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={filters.lowStock}
+                  onChange={(e) => setFilters((prev) => ({ ...prev, lowStock: e.target.checked }))}
+                  className="rounded border-white/30 bg-white/10 text-purple-600 focus:ring-purple-500"
+                />
+                <span>Low Stock Only</span>
+              </label>
+
               <button
                 onClick={resetFilters}
-                className="w-full px-4 py-2 bg-gradient-to-r from-blue-600 via-purple-600 to-red-600 hover:from-blue-700 hover:via-purple-700 hover:to-red-700 text-white rounded-md transition-all duration-300 hover:shadow-lg"
+                className="px-4 py-2 bg-gradient-to-r from-blue-600 via-purple-600 to-red-600 hover:from-blue-700 hover:via-purple-700 hover:to-red-700 text-white rounded-md transition-all duration-300 hover:shadow-lg"
               >
-                Reset Filters
+                Reset
               </button>
             </div>
           </div>

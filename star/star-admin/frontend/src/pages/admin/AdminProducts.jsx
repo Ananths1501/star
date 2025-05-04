@@ -19,6 +19,7 @@ const AdminProducts = () => {
   const [types, setTypes] = useState([])
   const [brands, setBrands] = useState([])
   const [error, setError] = useState(null)
+  const [productCounts, setProductCounts] = useState({}) // To track product counts by type
 
   useEffect(() => {
     fetchProducts()
@@ -40,6 +41,15 @@ const AdminProducts = () => {
       const response = await api.get("/products")
       setProducts(response.data)
       setFilteredProducts(response.data)
+
+      // Calculate product counts by type
+      const counts = {}
+      response.data.forEach((product) => {
+        if (product.type) {
+          counts[product.type] = (counts[product.type] || 0) + 1
+        }
+      })
+      setProductCounts(counts)
     } catch (error) {
       console.error("Error fetching products:", error)
       setError("Failed to load products. Please try again.")
@@ -79,6 +89,21 @@ const AdminProducts = () => {
     })
 
     setFilteredProducts(filtered)
+  }
+
+  const getSuggestions = () => {
+    if (!searchTerm || searchTerm.length < 2) return []
+
+    const searchValue = searchTerm.toLowerCase()
+    let suggestions = []
+
+    if (filterType === "brand") {
+      suggestions = brands.filter((brand) => brand.toLowerCase().includes(searchValue))
+    } else if (filterType === "type") {
+      suggestions = types.filter((type) => type.toLowerCase().includes(searchValue))
+    }
+
+    return suggestions.slice(0, 5) // Limit to 5 suggestions
   }
 
   const handleRefresh = () => {
@@ -126,6 +151,14 @@ const AdminProducts = () => {
     }
   }
 
+  // Generate product ID based on type and count
+  const generateProductId = (type) => {
+    if (!type) return ""
+    const typePrefix = type.charAt(0).toUpperCase()
+    const count = (productCounts[type] || 0) + 1
+    return `${typePrefix}${count.toString().padStart(4, "0")}`
+  }
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-full">
@@ -164,7 +197,7 @@ const AdminProducts = () => {
       )}
 
       {/* Search and Filter */}
-      <div className="bg-white/10 backdrop-blur-md rounded-lg shadow-lg border border-white/20 p-4 mb-6">
+      <div className="bg-gradient-to-r from-blue-900/90 via-purple-800/90 to-red-800/90 backdrop-blur-md rounded-lg shadow-lg border border-white/20 p-4 mb-6">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/70" size={18} />
@@ -175,6 +208,20 @@ const AdminProducts = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white placeholder-white/70 backdrop-blur-sm transition-all duration-300"
             />
+            {(filterType === "brand" || filterType === "type") && searchTerm.length >= 2 && (
+              <div className="absolute z-10 w-full mt-1 bg-gradient-to-b from-blue-900/90 via-purple-800/90 to-red-800/90 backdrop-blur-md rounded-md border border-white/20 shadow-lg max-h-60 overflow-auto">
+                {getSuggestions().map((suggestion, index) => (
+                  <div
+                    key={index}
+                    className="px-4 py-2 cursor-pointer hover:bg-white/10 text-white"
+                    onClick={() => setSearchTerm(suggestion)}
+                  >
+                    {suggestion}
+                  </div>
+                ))}
+                {getSuggestions().length === 0 && <div className="px-4 py-2 text-white/70">No suggestions found</div>}
+              </div>
+            )}
           </div>
 
           <div className="flex gap-2">
@@ -299,7 +346,14 @@ const AdminProducts = () => {
 
       {/* Add Product Modal */}
       {showAddModal && (
-        <AddProductModal onClose={handleCloseModal} onProductAdded={handleProductAdded} types={types} brands={brands} />
+        <AddProductModal
+          onClose={handleCloseModal}
+          onProductAdded={handleProductAdded}
+          types={types}
+          brands={brands}
+          generateProductId={generateProductId}
+          productCounts={productCounts}
+        />
       )}
 
       {/* Edit Product Modal */}
@@ -316,7 +370,7 @@ const AdminProducts = () => {
   )
 }
 
-const AddProductModal = ({ onClose, onProductAdded, types, brands }) => {
+const AddProductModal = ({ onClose, onProductAdded, types, brands, generateProductId, productCounts }) => {
   const [formData, setFormData] = useState({
     name: "",
     brand: "",
@@ -327,6 +381,7 @@ const AddProductModal = ({ onClose, onProductAdded, types, brands }) => {
     minStock: "",
     description: "",
     warranty: "0",
+    productId: "",
   })
   const [image, setImage] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -334,7 +389,16 @@ const AddProductModal = ({ onClose, onProductAdded, types, brands }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    setFormData((prev) => {
+      const newState = { ...prev, [name]: value }
+
+      // Generate product ID when type changes
+      if (name === "type" && value) {
+        newState.productId = generateProductId(value)
+      }
+
+      return newState
+    })
   }
 
   const handleImageChange = (e) => {
@@ -417,16 +481,21 @@ const AddProductModal = ({ onClose, onProductAdded, types, brands }) => {
                 name="brand"
                 value={formData.brand}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white"
+                className="w-full px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white backdrop-blur-sm"
                 required
+                style={{ backgroundImage: "none" }}
               >
-                <option value="">Select Brand</option>
+                <option value="" className="bg-blue-900 text-white">
+                  Select Brand
+                </option>
                 {brands.map((brand) => (
-                  <option key={brand} value={brand}>
+                  <option key={brand} value={brand} className="bg-blue-900 text-white">
                     {brand}
                   </option>
                 ))}
-                <option value="other">Other</option>
+                <option value="other" className="bg-blue-900 text-white">
+                  Other
+                </option>
               </select>
               {formData.brand === "other" && (
                 <input
@@ -444,16 +513,21 @@ const AddProductModal = ({ onClose, onProductAdded, types, brands }) => {
                 name="type"
                 value={formData.type}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white"
+                className="w-full px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white backdrop-blur-sm"
                 required
+                style={{ backgroundImage: "none" }}
               >
-                <option value="">Select Type</option>
+                <option value="" className="bg-blue-900 text-white">
+                  Select Type
+                </option>
                 {types.map((type) => (
-                  <option key={type} value={type}>
+                  <option key={type} value={type} className="bg-blue-900 text-white">
                     {type}
                   </option>
                 ))}
-                <option value="other">Other</option>
+                <option value="other" className="bg-blue-900 text-white">
+                  Other
+                </option>
               </select>
               {formData.type === "other" && (
                 <input
@@ -524,6 +598,17 @@ const AddProductModal = ({ onClose, onProductAdded, types, brands }) => {
                 className="w-full px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white"
                 required
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-white mb-1">Product ID</label>
+              <input
+                type="text"
+                name="productId"
+                value={formData.productId}
+                className="w-full px-3 py-2 border border-white/30 rounded-md shadow-sm bg-white/10 text-white/70"
+                disabled
+              />
+              <p className="text-xs text-white/50 mt-1">Auto-generated based on product type</p>
             </div>
           </div>
 
@@ -679,24 +764,28 @@ const EditProductModal = ({ product, onClose, onProductUpdated, types, brands })
               <label className="block text-sm font-medium text-white mb-1">Brand *</label>
               <select
                 name="brand"
-                value={brands.includes(formData.brand) ? formData.brand : "other"}
+                value={formData.brand}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white"
+                className="w-full px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white backdrop-blur-sm"
                 required
+                style={{ backgroundImage: "none" }}
               >
-                <option value="">Select Brand</option>
+                <option value="" className="bg-blue-900 text-white">
+                  Select Brand
+                </option>
                 {brands.map((brand) => (
-                  <option key={brand} value={brand}>
+                  <option key={brand} value={brand} className="bg-blue-900 text-white">
                     {brand}
                   </option>
                 ))}
-                <option value="other">Other</option>
+                <option value="other" className="bg-blue-900 text-white">
+                  Other
+                </option>
               </select>
-              {!brands.includes(formData.brand) && (
+              {formData.brand === "other" && (
                 <input
                   type="text"
                   name="brand"
-                  value={formData.brand}
                   placeholder="Enter brand name"
                   onChange={handleChange}
                   className="w-full mt-2 px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white"
@@ -709,16 +798,21 @@ const EditProductModal = ({ product, onClose, onProductUpdated, types, brands })
                 name="type"
                 value={types.includes(formData.type) ? formData.type : "other"}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white"
+                className="w-full px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white backdrop-blur-sm"
                 required
+                style={{ backgroundImage: "none" }}
               >
-                <option value="">Select Type</option>
+                <option value="" className="bg-blue-900 text-white">
+                  Select Type
+                </option>
                 {types.map((type) => (
-                  <option key={type} value={type}>
+                  <option key={type} value={type} className="bg-blue-900 text-white">
                     {type}
                   </option>
                 ))}
-                <option value="other">Other</option>
+                <option value="other" className="bg-blue-900 text-white">
+                  Other
+                </option>
               </select>
               {!types.includes(formData.type) && (
                 <input
@@ -789,6 +883,15 @@ const EditProductModal = ({ product, onClose, onProductUpdated, types, brands })
                 min="0"
                 className="w-full px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white"
                 required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-white mb-1">Product ID</label>
+              <input
+                type="text"
+                value={product.productId}
+                className="w-full px-3 py-2 border border-white/30 rounded-md shadow-sm bg-white/10 text-white/70"
+                disabled
               />
             </div>
           </div>

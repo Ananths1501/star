@@ -3,6 +3,7 @@ const express = require("express")
 const mongoose = require("mongoose")
 const cors = require("cors")
 const path = require("path")
+const morgan = require("morgan")
 const authRoutes = require("./routes/auth")
 const adminRoutes = require("./routes/admin")
 const productRoutes = require("./routes/products")
@@ -13,6 +14,7 @@ const { errorHandler } = require("./middleware/errorHandler")
 
 const app = express()
 
+app.use(morgan("dev")); 
 // Middleware
 app.use(
   cors({

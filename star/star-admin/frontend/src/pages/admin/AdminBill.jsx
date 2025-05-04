@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Search, ShoppingBag, Printer, AlertCircle } from "lucide-react"
+import { Search, ShoppingBag, Printer, AlertCircle, X } from "lucide-react"
 import { toast } from "react-hot-toast"
 import api from "../../utils/api"
 import jsPDF from "jspdf"
@@ -13,10 +13,13 @@ const AdminBill = () => {
   const [filteredProducts, setFilteredProducts] = useState([])
   const [billItems, setBillItems] = useState([])
   const [customerName, setCustomerName] = useState("Walk-in Customer")
+  const [customerPhone, setCustomerPhone] = useState("")
   const [paymentMethod, setPaymentMethod] = useState("Cash")
   const [isLoading, setIsLoading] = useState(true)
   const [isPrinting, setIsPrinting] = useState(false)
   const [error, setError] = useState(null)
+  const [showBillPreview, setShowBillPreview] = useState(false)
+  const [billData, setBillData] = useState(null)
 
   useEffect(() => {
     fetchProducts()
@@ -114,6 +117,30 @@ const AdminBill = () => {
       return
     }
 
+    // Prepare items for API
+    const orderItems = billItems.map((item) => ({
+      product: item._id,
+      quantity: item.quantity,
+      price: item.price,
+      discount: item.discount,
+    }))
+
+    // Create bill data for preview
+    const billPreviewData = {
+      items: billItems,
+      totalAmount: calculateTotal(),
+      customer: customerName || "Walk-in Customer",
+      customerPhone: customerPhone || "",
+      paymentMethod: paymentMethod || "Cash",
+      orderNumber: `BILL-${new Date().getFullYear()}${(new Date().getMonth() + 1).toString().padStart(2, "0")}${new Date().getDate().toString().padStart(2, "0")}-${Date.now().toString().substring(8)}`,
+      date: new Date().toLocaleDateString(),
+    }
+
+    setBillData(billPreviewData)
+    setShowBillPreview(true)
+  }
+
+  const handleConfirmBill = async () => {
     setIsPrinting(true)
     setError(null)
 
@@ -126,11 +153,13 @@ const AdminBill = () => {
         discount: item.discount,
       }))
 
-      // Create the order for inventory tracking first
+      // Create the order for inventory tracking
       const orderResponse = await api.post("/orders/bill", {
         items: orderItems,
-        customer: customerName,
-        paymentMethod: paymentMethod,
+        customer: customerName || "Walk-in Customer",
+        customerPhone: customerPhone || "",
+        paymentMethod: paymentMethod || "Cash",
+        orderType: "In-Shop",
       })
 
       // Create PDF
@@ -150,15 +179,14 @@ const AdminBill = () => {
 
       const currentDate = new Date()
       const formattedDate = currentDate.toLocaleDateString()
-      const billNumber =
-        orderResponse.data.order.orderNumber ||
-        `BILL-${currentDate.getFullYear()}${(currentDate.getMonth() + 1).toString().padStart(2, "0")}${currentDate.getDate().toString().padStart(2, "0")}-${Date.now().toString().substring(8)}`
+      const billNumber = orderResponse.data.order.orderNumber
 
       doc.setFontSize(10)
       doc.text(`Date: ${formattedDate}`, 15, 55)
       doc.text(`Customer: ${customerName}`, 15, 60)
-      doc.text(`Bill No: ${billNumber}`, 15, 65)
-      doc.text(`Payment Method: ${paymentMethod}`, 15, 70)
+      doc.text(`Phone: ${customerPhone || "N/A"}`, 15, 65)
+      doc.text(`Bill No: ${billNumber}`, 15, 70)
+      doc.text(`Payment Method: ${paymentMethod}`, 15, 75)
 
       // Add items table
       const tableColumn = ["Item", "Brand", "Price", "Discount", "Qty", "Total"]
@@ -177,14 +205,14 @@ const AdminBill = () => {
       doc.autoTable({
         head: [tableColumn],
         body: tableRows,
-        startY: 75,
+        startY: 80,
         theme: "grid",
         styles: { fontSize: 8 },
         headStyles: { fillColor: [30, 58, 138] }, // Dark blue from gradient
       })
 
       // Add total
-      const finalY = doc.lastAutoTable.finalY || 75
+      const finalY = doc.lastAutoTable.finalY || 80
       doc.text(`Total Amount: ₹${calculateTotal().toFixed(2)}`, 150, finalY + 10, { align: "right" })
 
       // Add footer
@@ -199,7 +227,9 @@ const AdminBill = () => {
       // Clear bill items
       setBillItems([])
       setCustomerName("Walk-in Customer")
+      setCustomerPhone("")
       setPaymentMethod("Cash")
+      setShowBillPreview(false)
 
       // Refresh products to get updated stock
       fetchProducts()
@@ -239,7 +269,7 @@ const AdminBill = () => {
             </div>
           </div>
 
-          <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-white mb-1">Customer Name</label>
               <input
@@ -251,16 +281,34 @@ const AdminBill = () => {
               />
             </div>
             <div>
+              <label className="block text-sm font-medium text-white mb-1">Customer Phone</label>
+              <input
+                type="tel"
+                value={customerPhone}
+                onChange={(e) => setCustomerPhone(e.target.value)}
+                className="w-full px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white placeholder-white/70 backdrop-blur-sm"
+                placeholder="Enter phone number"
+              />
+            </div>
+            <div>
               <label className="block text-sm font-medium text-white mb-1">Payment Method</label>
               <select
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value)}
                 className="w-full px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white backdrop-blur-sm"
               >
-                <option value="Cash">Cash</option>
-                <option value="Card">Card</option>
-                <option value="UPI">UPI</option>
-                <option value="Other">Other</option>
+                <option value="Cash" className="bg-blue-900 text-white">
+                  Cash
+                </option>
+                <option value="Card" className="bg-blue-900 text-white">
+                  Card
+                </option>
+                <option value="UPI" className="bg-blue-900 text-white">
+                  UPI
+                </option>
+                <option value="Other" className="bg-blue-900 text-white">
+                  Other
+                </option>
               </select>
             </div>
           </div>
@@ -424,6 +472,57 @@ const AdminBill = () => {
           </div>
         </div>
       </div>
+      {showBillPreview && billData && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gradient-to-b from-blue-900/90 via-purple-800/90 to-red-800/90 backdrop-blur-md rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-slide-up border border-white/20">
+            <div className="flex justify-between items-center p-4 border-b border-white/20">
+              <h2 className="text-xl font-bold text-white">Bill Preview</h2>
+              <button
+                onClick={() => setShowBillPreview(false)}
+                className="text-white hover:text-white/80 transition-colors hover:scale-110"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="p-6">
+              <div className="mb-2 text-white">
+                <strong>Customer:</strong> {billData.customer}
+              </div>
+              <div className="mb-2 text-white">
+                <strong>Phone:</strong> {billData.customerPhone || "N/A"}
+              </div>
+              <div className="mb-2 text-white">
+                <strong>Payment Method:</strong> {billData.paymentMethod}
+              </div>
+              <div className="mb-2 text-white">
+                <strong>Total Amount:</strong> ₹{billData.totalAmount.toFixed(2)}
+              </div>
+              <ul className="text-white">
+                {billData.items.map((item) => (
+                  <li key={item._id} className="py-1 border-b border-white/20">
+                    {item.name} - Qty: {item.quantity} - ₹{(item.price * (1 - item.discount / 100)).toFixed(2)}
+                  </li>
+                ))}
+              </ul>
+              <div className="flex justify-end mt-4">
+                <button
+                  className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2"
+                  onClick={() => setShowBillPreview(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                  onClick={handleConfirmBill}
+                >
+                  Confirm & Print
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

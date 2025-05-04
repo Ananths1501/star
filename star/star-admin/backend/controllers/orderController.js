@@ -1,10 +1,11 @@
 const Order = require("../models/Order")
 const Product = require("../models/Product")
+const User = require("../models/User") // Make sure User model is imported
 
 // Get all orders
 exports.getAllOrders = async (req, res) => {
   try {
-    const { startDate, endDate, status, search, sortBy, order } = req.query
+    const { startDate, endDate, status, search, sortBy, order, customerPhone, customerName } = req.query
     const filter = {}
 
     // Date filter
@@ -20,6 +21,16 @@ exports.getAllOrders = async (req, res) => {
 
     // Status filter
     if (status) filter.status = status
+
+    // Customer phone filter
+    if (customerPhone) {
+      filter.customerPhone = { $regex: customerPhone, $options: "i" }
+    }
+
+    // Customer name filter
+    if (customerName) {
+      filter.customer = { $regex: customerName, $options: "i" }
+    }
 
     // Search by order number or customer
     if (search) {
@@ -91,7 +102,7 @@ exports.updateOrderStatus = async (req, res) => {
 // Create bill (for walk-in customers)
 exports.createBill = async (req, res) => {
   try {
-    const { items, customer, paymentMethod } = req.body
+    const { items, customer, customerPhone, paymentMethod, orderType } = req.body
 
     if (!items || items.length === 0) {
       return res.status(400).json({ message: "No items in bill" })
@@ -146,8 +157,10 @@ exports.createBill = async (req, res) => {
       totalAmount,
       status: "Completed",
       customer: customer || "Walk-in Customer",
+      customerPhone: customerPhone || "",
       paymentMethod: paymentMethod || "Cash",
       paymentStatus: "Paid",
+      orderType: orderType || "In-Shop",
     })
 
     await order.save()
@@ -221,6 +234,7 @@ exports.getOrderStats = async (req, res) => {
       date: `${item._id.year}-${item._id.month.toString().padStart(2, "0")}-${item._id.day.toString().padStart(2, "0")}`,
       total: item.total,
       count: item.count,
+      sales: item.total, // Add this for chart compatibility
     }))
 
     res.json({

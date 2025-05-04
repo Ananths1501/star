@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Link, useLocation } from "react-router-dom"
+import { useState, useEffect, useRef } from "react"
+import { useLocation, useNavigate } from "react-router-dom"
 import {
   LayoutDashboard,
   Package,
@@ -16,8 +16,10 @@ import {
 
 const AnimatedSidebar = ({ sidebarOpen, setSidebarOpen, handleLogout, user }) => {
   const location = useLocation()
+  const navigate = useNavigate()
   const [activeItem, setActiveItem] = useState(null)
   const [hoveredItem, setHoveredItem] = useState(null)
+  const sidebarRef = useRef(null)
 
   const menuItems = [
     { path: "/admin/dashboard", label: "Dashboard", icon: <LayoutDashboard size={20} /> },
@@ -29,26 +31,65 @@ const AnimatedSidebar = ({ sidebarOpen, setSidebarOpen, handleLogout, user }) =>
   ]
 
   useEffect(() => {
-    // Set active item based on current location
     const currentItem = menuItems.find((item) => item.path === location.pathname)
     setActiveItem(currentItem?.path || null)
   }, [location.pathname])
 
+  const handleMouseEnter = () => {
+    setSidebarOpen(true)
+  }
+
+  const handleMouseLeave = () => {
+    setSidebarOpen(false)
+  }
+
+  const handleNavigation = (path) => {
+    navigate(path)
+    setTimeout(() => {
+      setSidebarOpen(false)
+    }, 300)
+  }
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
+        setSidebarOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [setSidebarOpen])
+
   return (
-    <>
-      {/* Mobile sidebar */}
+    <div
+      ref={sidebarRef}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      // "Carpet opening" width animation with transform-origin on the left edge.
+      className={`fixed top-0 left-0 h-full z-50 bg-gray-800 text-white transition-all duration-300 ease-out transform origin-left ${
+        sidebarOpen ? "w-64" : "w-20"
+      }`}
+    >
+      {/* Mobile sidebar overlay */}
       <div
-        className={`fixed inset-0 z-50 bg-black/50 backdrop-blur-sm md:hidden ${sidebarOpen ? "block" : "hidden"}`}
+        className={`fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden ${
+          sidebarOpen ? "block" : "hidden"
+        }`}
         onClick={() => setSidebarOpen(false)}
       ></div>
 
-      <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-blue-900 via-purple-800 to-red-800 shadow-lg transform transition-transform duration-300 ease-in-out ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } md:relative md:translate-x-0`}
-      >
+      <div className="flex flex-col justify-between h-full">
+        {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-white/20">
-          <h1 className="text-xl font-bold text-white">Star Electricals</h1>
+          <h1
+            className={`text-xl font-bold transition-all duration-300 ${
+              sidebarOpen ? "opacity-100 translate-x-0" : "opacity-0 translate-x-10"
+            }`}
+          >
+            Star Electricals
+          </h1>
           <button
             onClick={() => setSidebarOpen(false)}
             className="p-2 rounded-md md:hidden text-white hover:bg-white/10"
@@ -57,49 +98,57 @@ const AnimatedSidebar = ({ sidebarOpen, setSidebarOpen, handleLogout, user }) =>
           </button>
         </div>
 
-        <div className="p-4">
+        {/* Menu items */}
+        <div className="flex-1 p-4">
           <nav className="space-y-2">
             {menuItems.map((item) => (
-              <Link
+              <button
                 key={item.path}
-                to={item.path}
-                className={`flex items-center px-4 py-3 rounded-lg transition-all duration-300 relative overflow-hidden group ${
-                  location.pathname === item.path
-                    ? "text-white bg-white/20"
-                    : "text-white/80 hover:text-white hover:bg-white/10"
+                className={`flex items-center w-full px-4 py-3 rounded-lg relative overflow-hidden group transition-all duration-300 ${
+                  location.pathname === item.path ? "bg-white/20" : "hover:bg-white/10"
                 }`}
                 onMouseEnter={() => setHoveredItem(item.path)}
                 onMouseLeave={() => setHoveredItem(null)}
+                onClick={() => handleNavigation(item.path)}
               >
                 {/* Animated background glow */}
                 {(hoveredItem === item.path || location.pathname === item.path) && (
                   <div className="absolute inset-0 bg-gradient-to-r from-blue-600/30 via-purple-600/30 to-red-600/30 rounded-lg blur-sm transform scale-105 transition-transform duration-300"></div>
                 )}
-
                 <div className="relative z-10 flex items-center w-full">
-                  <div
-                    className={`transition-all duration-300 ${location.pathname === item.path ? "text-white" : "text-white/80 group-hover:text-white"}`}
+                  <div className="transition-all duration-300">{item.icon}</div>
+                  <span
+                    className={`ml-3 whitespace-nowrap transition-all duration-300 ${
+                      sidebarOpen ? "opacity-100 translate-x-0" : "opacity-0 translate-x-10"
+                    }`}
                   >
-                    {item.icon}
-                  </div>
-                  <span className="ml-3">{item.label}</span>
-
-                  {location.pathname === item.path && <ChevronRight className="ml-auto h-4 w-4 text-white" />}
+                    {item.label}
+                  </span>
+                  {location.pathname === item.path && (
+                    <ChevronRight className="ml-auto h-4 w-4 text-white" />
+                  )}
                 </div>
-              </Link>
+              </button>
             ))}
           </nav>
         </div>
 
+        {/* Footer */}
         <div className="absolute bottom-0 w-full p-4 border-t border-white/20">
           <div className="flex items-center mb-4 px-4 py-2 rounded-lg bg-white/10">
             <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-red-500 flex items-center justify-center text-white">
               {user?.name?.charAt(0) || "A"}
             </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-white">{user?.name || "Admin User"}</p>
-              <p className="text-xs text-white/70">{user?.role || "Administrator"}</p>
-            </div>
+            {sidebarOpen && (
+              <div className="ml-3 transition-all duration-300">
+                <p className="text-sm font-medium text-white">
+                  {user?.name || "Admin User"}
+                </p>
+                <p className="text-xs text-white/70">
+                  {user?.role || "Administrator"}
+                </p>
+              </div>
+            )}
           </div>
 
           <button
@@ -107,11 +156,41 @@ const AnimatedSidebar = ({ sidebarOpen, setSidebarOpen, handleLogout, user }) =>
             className="flex items-center w-full px-4 py-3 rounded-lg bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-red-600/20 hover:from-blue-600/30 hover:via-purple-600/30 hover:to-red-600/30 text-white transition-all duration-300"
           >
             <LogOut size={20} />
-            <span className="ml-3">Logout</span>
+            <span
+              className={`ml-3 transition-all duration-300 ${
+                sidebarOpen ? "opacity-100 translate-x-0" : "opacity-0 translate-x-10"
+              }`}
+            >
+              Logout
+            </span>
           </button>
         </div>
       </div>
-    </>
+
+      {/* Mobile toggle when closed */}
+      <button
+        onClick={() => setSidebarOpen(true)}
+        className={`fixed top-4 left-4 z-30 p-2 rounded-md bg-gradient-to-r from-blue-600 via-purple-600 to-red-600 text-white md:hidden ${
+          sidebarOpen ? "hidden" : "block"
+        }`}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+    </div>
   )
 }
 

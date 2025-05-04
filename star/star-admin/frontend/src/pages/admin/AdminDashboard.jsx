@@ -37,6 +37,7 @@ const AdminDashboard = () => {
   const [timeframe, setTimeframe] = useState("weekly")
   const [error, setError] = useState(null)
 
+  // Update the useEffect to fetch real data
   useEffect(() => {
     fetchDashboardData()
   }, [])
@@ -45,8 +46,40 @@ const AdminDashboard = () => {
     try {
       setIsLoading(true)
       setError(null)
-      const response = await api.get("/admin/dashboard")
-      setDashboardData(response.data)
+
+      // Fetch all required data in parallel
+      const [productsRes, ordersRes, servicesRes, statsRes] = await Promise.all([
+        api.get("/products"),
+        api.get("/orders"),
+        api.get("/services"),
+        api.get("/orders/stats/summary"),
+      ])
+
+      // Calculate low stock products
+      const lowStockProducts = productsRes.data.filter((product) => product.stock <= product.minStock)
+
+      // Get recent orders
+      const recentOrders = ordersRes.data.slice(0, 5)
+
+      // Calculate worker count
+      let workerCount = 0
+      servicesRes.data.forEach((service) => {
+        workerCount += service.workers.length
+      })
+
+      // Set dashboard data
+      setDashboardData({
+        counts: {
+          products: productsRes.data.length,
+          orders: ordersRes.data.length,
+          services: servicesRes.data.length,
+          workers: workerCount,
+          admins: 1, // Default value
+        },
+        lowStockProducts: lowStockProducts,
+        recentOrders: recentOrders,
+        salesData: statsRes.data.salesByDate || [],
+      })
     } catch (error) {
       console.error("Error fetching dashboard data:", error)
       setError("Failed to load dashboard data. Please try refreshing.")

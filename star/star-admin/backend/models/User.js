@@ -24,4 +24,5 @@ userSchema.pre("save", async function (next) {
   next()
 })
 
+// Make sure to register the model
 module.exports = mongoose.model("User", userSchema)

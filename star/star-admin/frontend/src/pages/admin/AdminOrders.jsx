@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Package, Clock, Check, Truck, X, Calendar, Search, Filter } from "lucide-react"
+import { Package, Clock, Check, Truck, X, Calendar, Search, Filter, Phone, User } from "lucide-react"
 import { toast } from "react-hot-toast"
 import api from "../../utils/api"
 
@@ -14,6 +14,8 @@ const AdminOrders = () => {
   const [searchTerm, setSearchTerm] = useState("")
   const [dateRange, setDateRange] = useState({ startDate: "", endDate: "" })
   const [showFilters, setShowFilters] = useState(false)
+  const [customerPhone, setCustomerPhone] = useState("")
+  const [customerName, setCustomerName] = useState("")
 
   useEffect(() => {
     fetchOrders()
@@ -21,7 +23,7 @@ const AdminOrders = () => {
 
   useEffect(() => {
     filterOrders()
-  }, [searchTerm, dateRange, orders])
+  }, [searchTerm, dateRange, customerPhone, customerName, orders])
 
   const fetchOrders = async () => {
     try {
@@ -49,6 +51,20 @@ const AdminOrders = () => {
           (order._id && order._id.toLowerCase().includes(searchLower)) ||
           (order.customer && order.customer.toLowerCase().includes(searchLower)) ||
           (order.user && order.user.name && order.user.name.toLowerCase().includes(searchLower)),
+      )
+    }
+
+    // Apply customer phone filter
+    if (customerPhone) {
+      filtered = filtered.filter(
+        (order) => order.customerPhone && order.customerPhone.toLowerCase().includes(customerPhone.toLowerCase()),
+      )
+    }
+
+    // Apply customer name filter
+    if (customerName) {
+      filtered = filtered.filter(
+        (order) => order.customer && order.customer.toLowerCase().includes(customerName.toLowerCase()),
       )
     }
 
@@ -110,50 +126,76 @@ const AdminOrders = () => {
       </div>
 
       {/* Search and Filter */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6">
+      <div className="bg-white/10 backdrop-blur-md rounded-lg shadow-lg border border-white/20 p-4 mb-6">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/70" size={18} />
             <input
               type="text"
               placeholder="Search by order number or customer..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+              className="w-full pl-10 pr-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white placeholder-white/70 backdrop-blur-sm"
             />
           </div>
 
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+            className="px-4 py-2 bg-gradient-to-r from-blue-600/30 via-purple-600/30 to-red-600/30 hover:from-blue-600/40 hover:via-purple-600/40 hover:to-red-600/40 border border-white/30 rounded-md text-white transition-all duration-300 flex items-center"
           >
-            <Filter size={18} className="mr-1" /> Filter by Date
+            <Filter size={18} className="mr-1" /> Filter
           </button>
         </div>
 
         {showFilters && (
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Start Date</label>
+              <label className="block text-sm font-medium text-white mb-1">Start Date</label>
               <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/70" size={18} />
                 <input
                   type="date"
                   value={dateRange.startDate}
                   onChange={(e) => setDateRange({ ...dateRange, startDate: e.target.value })}
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                  className="w-full pl-10 pr-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white"
                 />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">End Date</label>
+              <label className="block text-sm font-medium text-white mb-1">End Date</label>
               <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/70" size={18} />
                 <input
                   type="date"
                   value={dateRange.endDate}
                   onChange={(e) => setDateRange({ ...dateRange, endDate: e.target.value })}
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                  className="w-full pl-10 pr-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-white mb-1">Customer Phone</label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/70" size={18} />
+                <input
+                  type="text"
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  placeholder="Search by phone..."
+                  className="w-full pl-10 pr-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white placeholder-white/70"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-white mb-1">Customer Name</label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/70" size={18} />
+                <input
+                  type="text"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  placeholder="Search by name..."
+                  className="w-full pl-10 pr-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white placeholder-white/70"
                 />
               </div>
             </div>
@@ -162,59 +204,63 @@ const AdminOrders = () => {
       </div>
 
       {filteredOrders.length === 0 ? (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8 text-center">
-          <Package className="mx-auto text-gray-400 text-5xl mb-4" />
-          <h2 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">No orders found</h2>
-          <p className="text-gray-600 dark:text-gray-400">Try adjusting your search or filter criteria.</p>
+        <div className="bg-white/10 backdrop-blur-md rounded-lg shadow-lg border border-white/20 p-8 text-center">
+          <Package className="mx-auto text-white/40 text-5xl mb-4" />
+          <h2 className="text-xl font-semibold mb-2 text-white">No orders found</h2>
+          <p className="text-white/70">Try adjusting your search or filter criteria.</p>
         </div>
       ) : (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+        <div className="bg-white/10 backdrop-blur-md rounded-lg shadow-lg border border-white/20 overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
+            <table className="min-w-full divide-y divide-white/20">
+              <thead className="bg-white/5">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/70 uppercase tracking-wider">
                     Order ID
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/70 uppercase tracking-wider">
                     Customer
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/70 uppercase tracking-wider">
+                    Phone
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/70 uppercase tracking-wider">
                     Date
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/70 uppercase tracking-wider">
                     Total
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/70 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white/70 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+              <tbody className="bg-white/5 divide-y divide-white/20">
                 {filteredOrders.map((order) => (
-                  <tr key={order._id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <tr key={order._id} className="hover:bg-white/10 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">
+                      <div className="text-sm font-medium text-white">
                         {order.orderNumber || order._id.substring(0, 8)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-700 dark:text-gray-300">
+                      <div className="text-sm text-white">
                         {order.user ? order.user.name : order.customer || "Walk-in Customer"}
                       </div>
-                      {order.user && <div className="text-xs text-gray-500 dark:text-gray-400">{order.user.email}</div>}
+                      {order.user && <div className="text-xs text-white/70">{order.user.email}</div>}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-700 dark:text-gray-300">{formatDate(order.createdAt)}</div>
+                      <div className="text-sm text-white">{order.customerPhone || "N/A"}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        ₹{order.totalAmount.toFixed(2)}
-                      </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                      <div className="text-sm text-white">{formatDate(order.createdAt)}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-white">₹{order.totalAmount.toFixed(2)}</div>
+                      <div className="text-xs text-white/70">
                         {order.items.length} item{order.items.length !== 1 ? "s" : ""}
                       </div>
                     </td>
@@ -222,14 +268,14 @@ const AdminOrders = () => {
                       <span
                         className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                           order.status === "Pending"
-                            ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300"
+                            ? "bg-yellow-500/30 text-white"
                             : order.status === "Processing"
-                              ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+                              ? "bg-blue-500/30 text-white"
                               : order.status === "Shipped"
-                                ? "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
+                                ? "bg-purple-500/30 text-white"
                                 : order.status === "Delivered"
-                                  ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
-                                  : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
+                                  ? "bg-green-500/30 text-white"
+                                  : "bg-red-500/30 text-white"
                         }`}
                       >
                         <span className="flex items-center">
@@ -241,7 +287,7 @@ const AdminOrders = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button
                         onClick={() => handleViewOrder(order)}
-                        className="text-blue-600 hover:text-blue-800 transition-colors"
+                        className="text-white hover:text-blue-300 transition-colors"
                       >
                         View Details
                       </button>
@@ -293,14 +339,11 @@ const OrderDetailsModal = ({ order, onClose, onStatusUpdate }) => {
   }
 
   return (
-    <div className="fixed inset-0 bg-gradient-primary bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4 modal-backdrop">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-slide-up">
-        <div className="flex justify-between items-center p-4 border-b dark:border-gray-700 bg-gradient-to-r from-primary-dark/10 to-primary/10 dark:from-primary-dark/20 dark:to-primary/20">
-          <h2 className="text-xl font-bold text-primary-dark dark:text-white">Order Details</h2>
-          <button
-            onClick={onClose}
-            className="text-primary hover:text-primary-pink dark:hover:text-primary-pink/80 transition-colors hover:scale-110"
-          >
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-gradient-to-b from-blue-900/90 via-purple-800/90 to-red-800/90 backdrop-blur-md rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-slide-up border border-white/20">
+        <div className="flex justify-between items-center p-4 border-b border-white/20">
+          <h2 className="text-xl font-bold text-white">Order Details</h2>
+          <button onClick={onClose} className="text-white hover:text-white/80 transition-colors hover:scale-110">
             <X size={24} />
           </button>
         </div>
@@ -308,72 +351,69 @@ const OrderDetailsModal = ({ order, onClose, onStatusUpdate }) => {
         <div className="p-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div>
-              <h3 className="font-semibold mb-2 text-gray-900 dark:text-white">Order Information</h3>
-              <p className="text-sm mb-1 text-gray-700 dark:text-gray-300">
-                Order ID: {order.orderNumber || order._id}
-              </p>
-              <p className="text-sm mb-1 text-gray-700 dark:text-gray-300">Date: {formatDate(order.createdAt)}</p>
-              <p className="text-sm mb-1 text-gray-700 dark:text-gray-300">
+              <h3 className="font-semibold mb-2 text-white">Order Information</h3>
+              <p className="text-sm mb-1 text-white">Order ID: {order.orderNumber || order._id}</p>
+              <p className="text-sm mb-1 text-white">Date: {formatDate(order.createdAt)}</p>
+              <p className="text-sm mb-1 text-white">
                 Status:
                 <span
                   className={`ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                     order.status === "Pending"
-                      ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300"
+                      ? "bg-yellow-500/30 text-white"
                       : order.status === "Processing"
-                        ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+                        ? "bg-blue-500/30 text-white"
                         : order.status === "Shipped"
-                          ? "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
+                          ? "bg-purple-500/30 text-white"
                           : order.status === "Delivered"
-                            ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
-                            : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
+                            ? "bg-green-500/30 text-white"
+                            : "bg-red-500/30 text-white"
                   }`}
                 >
                   {order.status}
                 </span>
               </p>
-              <p className="text-sm mb-1 text-gray-700 dark:text-gray-300">
-                Payment Method: {order.paymentMethod || "Cash"}
-              </p>
-              <p className="text-sm text-gray-700 dark:text-gray-300">
-                Payment Status: {order.paymentStatus || "Paid"}
-              </p>
+              <p className="text-sm mb-1 text-white">Payment Method: {order.paymentMethod || "Cash"}</p>
+              <p className="text-sm text-white">Payment Status: {order.paymentStatus || "Paid"}</p>
             </div>
 
             <div>
-              <h3 className="font-semibold mb-2 text-gray-900 dark:text-white">Customer Information</h3>
+              <h3 className="font-semibold mb-2 text-white">Customer Information</h3>
               {order.user ? (
                 <>
-                  <p className="text-sm mb-1 text-gray-700 dark:text-gray-300">Name: {order.user.name}</p>
-                  <p className="text-sm mb-1 text-gray-700 dark:text-gray-300">Email: {order.user.email}</p>
-                  <p className="text-sm mb-1 text-gray-700 dark:text-gray-300">Phone: {order.user.phone}</p>
-                  <p className="text-sm text-gray-700 dark:text-gray-300">Address: {order.user.address}</p>
+                  <p className="text-sm mb-1 text-white">Name: {order.user.name}</p>
+                  <p className="text-sm mb-1 text-white">Email: {order.user.email}</p>
+                  <p className="text-sm mb-1 text-white">Phone: {order.user.phone}</p>
+                  <p className="text-sm text-white">Address: {order.user.address}</p>
                 </>
               ) : (
-                <p className="text-sm text-gray-700 dark:text-gray-300">{order.customer || "Walk-in Customer"}</p>
+                <>
+                  <p className="text-sm mb-1 text-white">Name: {order.customer || "Walk-in Customer"}</p>
+                  <p className="text-sm text-white">Phone: {order.customerPhone || "N/A"}</p>
+                </>
               )}
             </div>
           </div>
 
-          <h3 className="font-semibold mb-2 text-gray-900 dark:text-white">Order Items</h3>
-          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg overflow-hidden mb-6">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
-              <thead className="bg-gray-100 dark:bg-gray-600">
+          <h3 className="font-semibold mb-2 text-white">Order Items</h3>
+          <div className="bg-white/5 rounded-lg overflow-hidden mb-6">
+            <table className="min-w-full divide-y divide-white/20">
+              <thead className="bg-white/10">
                 <tr>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-4 py-2 text-left text-xs font-medium text-white/70 uppercase tracking-wider">
                     Product
                   </th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-4 py-2 text-left text-xs font-medium text-white/70 uppercase tracking-wider">
                     Price
                   </th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-4 py-2 text-left text-xs font-medium text-white/70 uppercase tracking-wider">
                     Quantity
                   </th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-4 py-2 text-left text-xs font-medium text-white/70 uppercase tracking-wider">
                     Total
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
+              <tbody className="divide-y divide-white/20">
                 {order.items.map((item, index) => (
                   <tr key={index}>
                     <td className="px-4 py-3 whitespace-nowrap">
@@ -384,68 +424,76 @@ const OrderDetailsModal = ({ order, onClose, onStatusUpdate }) => {
                           className="w-10 h-10 object-cover rounded-md mr-3"
                         />
                         <div>
-                          <div className="font-medium text-sm text-gray-900 dark:text-white">{item.product?.name}</div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">{item.product?.brand}</div>
+                          <div className="font-medium text-sm text-white">{item.product?.name}</div>
+                          <div className="text-xs text-white/70">{item.product?.brand}</div>
                         </div>
                       </div>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <div className="text-sm text-gray-700 dark:text-gray-300">₹{item.price?.toFixed(2)}</div>
-                      {item.discount > 0 && <div className="text-xs text-red-500">-{item.discount}%</div>}
+                      <div className="text-sm text-white">₹{item.price?.toFixed(2)}</div>
+                      {item.discount > 0 && <div className="text-xs text-red-300">-{item.discount}%</div>}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <div className="text-sm text-gray-700 dark:text-gray-300">{item.quantity}</div>
+                      <div className="text-sm text-white">{item.quantity}</div>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">
+                      <div className="text-sm font-medium text-white">
                         ₹{(item.price * (1 - item.discount / 100) * item.quantity).toFixed(2)}
                       </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
-              <tfoot className="bg-gray-50 dark:bg-gray-700">
+              <tfoot className="bg-white/10">
                 <tr>
-                  <td colSpan="3" className="px-4 py-3 text-right font-medium text-gray-700 dark:text-gray-300">
+                  <td colSpan="3" className="px-4 py-3 text-right font-medium text-white">
                     Total:
                   </td>
-                  <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">
-                    ₹{order.totalAmount.toFixed(2)}
-                  </td>
+                  <td className="px-4 py-3 font-medium text-white">₹{order.totalAmount.toFixed(2)}</td>
                 </tr>
               </tfoot>
             </table>
           </div>
 
-          <div className="flex items-center justify-between p-4 bg-gradient-to-r from-primary/5 to-primary-dark/5 dark:from-primary/10 dark:to-primary-dark/10 border-t border-primary/10 dark:border-primary/5">
+          <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg border border-white/20">
             <div className="w-1/2">
-              <label htmlFor="status" className="block text-sm font-medium text-primary-dark dark:text-gray-300 mb-1">
+              <label htmlFor="status" className="block text-sm font-medium text-white mb-1">
                 Update Status
               </label>
               <select
                 id="status"
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
-                className="w-full px-3 py-2 border border-primary/30 dark:border-primary/20 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:text-white"
+                className="w-full px-3 py-2 border border-white/30 rounded-md shadow-sm focus:outline-none focus:ring-white/50 focus:border-white/50 bg-white/10 text-white backdrop-blur-sm"
               >
-                <option value="Pending">Pending</option>
-                <option value="Processing">Processing</option>
-                <option value="Shipped">Shipped</option>
-                <option value="Delivered">Delivered</option>
-                <option value="Cancelled">Cancelled</option>
+                <option value="Pending" className="bg-blue-900 text-white">
+                  Pending
+                </option>
+                <option value="Processing" className="bg-blue-900 text-white">
+                  Processing
+                </option>
+                <option value="Shipped" className="bg-blue-900 text-white">
+                  Shipped
+                </option>
+                <option value="Delivered" className="bg-blue-900 text-white">
+                  Delivered
+                </option>
+                <option value="Cancelled" className="bg-blue-900 text-white">
+                  Cancelled
+                </option>
               </select>
             </div>
             <div className="flex space-x-2">
               <button
                 onClick={onClose}
-                className="px-4 py-2 border border-primary/30 dark:border-primary/20 rounded-md text-primary-dark dark:text-gray-300 hover:bg-primary/10 dark:hover:bg-primary/20 transition-all hover:-translate-y-1 active:translate-y-0"
+                className="px-4 py-2 border border-white/30 rounded-md text-white hover:bg-white/10 transition-all hover:-translate-y-1 active:translate-y-0"
               >
                 Close
               </button>
               <button
                 onClick={handleStatusChange}
                 disabled={isLoading || status === order.status}
-                className="px-4 py-2 bg-gradient-primary text-white rounded-md transition-all hover:-translate-y-1 active:translate-y-0 shadow-md hover:shadow-purple-glow disabled:opacity-70"
+                className="px-4 py-2 bg-gradient-to-r from-blue-600 via-purple-600 to-red-600 hover:from-blue-700 hover:via-purple-700 hover:to-red-700 text-white rounded-md transition-all hover:-translate-y-1 active:translate-y-0 shadow-md hover:shadow-purple-glow disabled:opacity-70"
               >
                 {isLoading ? "Updating..." : "Update Status"}
               </button>

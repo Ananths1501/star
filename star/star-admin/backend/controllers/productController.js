@@ -64,7 +64,7 @@ exports.addProduct = async (req, res) => {
     const { name, brand, type, price, discount, stock, minStock, description, warranty, productId } = req.body
 
     // Generate product ID if not provided
-    const finalProductId = productId || (await generateProductId(name))
+    const finalProductId = productId || (await generateProductId(type, name))
 
     // Check if product with same name already exists
     const existingProduct = await Product.findOne({ name })

@@ -35,6 +35,15 @@ const orderSchema = new mongoose.Schema({
     type: String,
     default: "Walk-in Customer",
   },
+  customerPhone: {
+    type: String,
+    default: "",
+  },
+  orderType: {
+    type: String,
+    enum: ["Online", "In-Shop"],
+    default: "In-Shop",
+  },
   items: [orderItemSchema],
   totalAmount: {
     type: Number,
@@ -73,7 +82,7 @@ orderSchema.pre("save", function (next) {
 
 // Generate order number
 orderSchema.pre("save", async function (next) {
-  if (this.isNew) {
+  if (this.isNew && !this.orderNumber) {
     const count = await this.constructor.countDocuments()
     const date = new Date()
     const year = date.getFullYear().toString().slice(-2)

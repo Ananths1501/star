@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Users, Eye, Wrench, X, Edit, Trash2, AlertCircle, RefreshCw } from "lucide-react"
+import { Plus, Eye, Wrench, X, Edit, Trash2, AlertCircle, RefreshCw } from "lucide-react"
 import { toast } from "react-hot-toast"
 import api from "../../utils/api"
 
@@ -16,6 +16,7 @@ const AdminServices = () => {
   const [currentService, setCurrentService] = useState(null)
   const [currentWorker, setCurrentWorker] = useState(null)
   const [error, setError] = useState(null)
+  const [preSelectedServiceType, setPreSelectedServiceType] = useState("")
 
   useEffect(() => {
     fetchServices()
@@ -67,6 +68,7 @@ const AdminServices = () => {
     setShowEditWorkerModal(false)
     setCurrentService(null)
     setCurrentWorker(null)
+    setPreSelectedServiceType("")
   }
 
   const handleDeleteService = async (serviceId) => {
@@ -80,6 +82,11 @@ const AdminServices = () => {
         toast.error("Failed to delete service")
       }
     }
+  }
+
+  const handleAddWorkerForService = (serviceType) => {
+    setPreSelectedServiceType(serviceType)
+    setShowAddWorkerModal(true)
   }
 
   if (isLoading) {
@@ -108,12 +115,6 @@ const AdminServices = () => {
             className="px-4 py-2 bg-gradient-to-r from-blue-600 via-purple-600 to-red-600 hover:from-blue-700 hover:via-purple-700 hover:to-red-700 text-white rounded-md transition-all duration-300 hover:shadow-lg flex items-center"
           >
             <Plus size={18} className="mr-1" /> Add Service
-          </button>
-          <button
-            onClick={handleAddWorker}
-            className="px-4 py-2 bg-gradient-to-r from-blue-600 via-purple-600 to-red-600 hover:from-blue-700 hover:via-purple-700 hover:to-red-700 text-white rounded-md transition-all duration-300 hover:shadow-lg flex items-center"
-          >
-            <Users size={18} className="mr-1" /> Add Worker
           </button>
         </div>
       </div>
@@ -179,11 +180,22 @@ const AdminServices = () => {
       )}
 
       {/* Add Service Modal */}
-      {showAddServiceModal && <AddServiceModal onClose={handleCloseModal} onServiceAdded={fetchServices} />}
+      {showAddServiceModal && (
+        <AddServiceModal
+          onClose={handleCloseModal}
+          onServiceAdded={fetchServices}
+          onAddWorkerForService={handleAddWorkerForService}
+        />
+      )}
 
       {/* Add Worker Modal */}
       {showAddWorkerModal && (
-        <AddWorkerModal services={services} onClose={handleCloseModal} onWorkerAdded={fetchServices} />
+        <AddWorkerModal
+          services={services}
+          onClose={handleCloseModal}
+          onWorkerAdded={fetchServices}
+          preSelectedServiceType={preSelectedServiceType}
+        />
       )}
 
       {/* View Workers Modal */}
@@ -193,6 +205,7 @@ const AdminServices = () => {
           onClose={handleCloseModal}
           onEditWorker={handleEditWorker}
           onWorkersUpdated={fetchServices}
+          onAddWorkerForService={handleAddWorkerForService}
         />
       )}
 
@@ -209,7 +222,7 @@ const AdminServices = () => {
   )
 }
 
-const AddServiceModal = ({ onClose, onServiceAdded }) => {
+const AddServiceModal = ({ onClose, onServiceAdded, onAddWorkerForService }) => {
   const [serviceType, setServiceType] = useState("")
   const [description, setDescription] = useState("")
   const [image, setImage] = useState(null)
@@ -248,9 +261,16 @@ const AddServiceModal = ({ onClose, onServiceAdded }) => {
         formData.append("image", image)
       }
 
-      await api.post("/services", formData)
+      const response = await api.post("/services", formData)
       onServiceAdded()
       toast.success("Service added successfully")
+
+      // Ask user if they want to add a worker for this service
+      if (window.confirm(`Would you like to add a worker for the new ${serviceType} service?`)) {
+        // Close current modal and open add worker modal with pre-selected service type
+        onClose()
+        onAddWorkerForService(serviceType)
+      }
     } catch (error) {
       console.error("Error adding service:", error)
       toast.error(error.response?.data?.message || "Failed to add service")
@@ -332,12 +352,12 @@ const AddServiceModal = ({ onClose, onServiceAdded }) => {
   )
 }
 
-const AddWorkerModal = ({ services, onClose, onWorkerAdded }) => {
+const AddWorkerModal = ({ services, onClose, onWorkerAdded, preSelectedServiceType }) => {
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
     address: "",
-    serviceType: "",
+    serviceType: preSelectedServiceType || "",
     feesPerDay: "",
   })
   const [image, setImage] = useState(null)
@@ -511,7 +531,7 @@ const AddWorkerModal = ({ services, onClose, onWorkerAdded }) => {
   )
 }
 
-const ViewWorkersModal = ({ service, onClose, onEditWorker, onWorkersUpdated }) => {
+const ViewWorkersModal = ({ service, onClose, onEditWorker, onWorkersUpdated, onAddWorkerForService }) => {
   const [workers, setWorkers] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -547,6 +567,11 @@ const ViewWorkersModal = ({ service, onClose, onEditWorker, onWorkersUpdated }) 
         toast.error("Failed to delete worker")
       }
     }
+  }
+
+  const handleAddWorker = () => {
+    onClose()
+    onAddWorkerForService(service.serviceType)
   }
 
   return (
@@ -608,7 +633,13 @@ const ViewWorkersModal = ({ service, onClose, onEditWorker, onWorkersUpdated }) 
           )}
         </div>
 
-        <div className="flex justify-end p-4 border-t border-white/20">
+        <div className="flex justify-between p-4 border-t border-white/20">
+          <button
+            onClick={handleAddWorker}
+            className="px-4 py-2 bg-gradient-to-r from-blue-600 via-purple-600 to-red-600 hover:from-blue-700 hover:via-purple-700 hover:to-red-700 text-white rounded-md transition-all duration-300 hover:shadow-lg flex items-center"
+          >
+            <Plus size={18} className="mr-1" /> Add Worker
+          </button>
           <button
             onClick={onClose}
             className="px-4 py-2 bg-gradient-to-r from-blue-600/30 via-purple-600/30 to-red-600/30 hover:from-blue-600/40 hover:via-purple-600/40 hover:to-red-600/40 border border-white/30 rounded-md text-white transition-all duration-300 hover:-translate-y-1 active:translate-y-0"
