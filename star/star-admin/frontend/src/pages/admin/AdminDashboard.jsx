@@ -113,7 +113,7 @@ const AdminDashboard = () => {
         <button
           onClick={handleRefresh}
           disabled={isRefreshing}
-          className="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-md text-white hover:bg-white/20 transition-all duration-300 disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-glass rounded-md text-white hover:bg-white/20 transition-all duration-300 disabled:opacity-50"
         >
           {isRefreshing ? <RefreshCw className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
           Refresh
@@ -168,7 +168,7 @@ const AdminDashboard = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Low Stock Products */}
-        <div className="bg-white/10 backdrop-blur-md rounded-lg shadow-lg border border-white/20 p-6 animate-slide-up delay-200 hover:shadow-xl transition-all duration-300 hover:translate-y-[-5px]">
+        <div className="card-glass p-6 animate-slide-up delay-200">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold text-white flex items-center">
               <AlertTriangle className="mr-2 h-5 w-5 text-white/80" />
@@ -239,7 +239,7 @@ const AdminDashboard = () => {
         </div>
 
         {/* Recent Orders */}
-        <div className="bg-white/10 backdrop-blur-md rounded-lg shadow-lg border border-white/20 p-6 animate-slide-up delay-300 hover:shadow-xl transition-all duration-300 hover:translate-y-[-5px]">
+        <div className="card-glass p-6 animate-slide-up delay-300">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold text-white flex items-center">
               <Clock className="mr-2 h-5 w-5 text-white/80" />
@@ -324,7 +324,7 @@ const AdminDashboard = () => {
 
       {/* Sales Overview Chart */}
       <div className="mt-6 animate-slide-up delay-400">
-        <div className="bg-white/10 backdrop-blur-md rounded-lg shadow-lg border border-white/20 p-6 hover:shadow-xl transition-all duration-300 hover:translate-y-[-5px]">
+        <div className="card-glass p-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold text-white flex items-center">
               <TrendingUp className="mr-2 h-5 w-5 text-white/80" />
@@ -360,7 +360,7 @@ const AdminDashboard = () => {
                 {dashboardData.salesData.slice(-7).map((item, index) => (
                   <div key={index} className="flex flex-col items-center">
                     <div
-                      className="bg-gradient-to-t from-red-500 via-purple-500 to-blue-500 w-full rounded-t-md transition-all duration-500 hover:shadow-lg hover:scale-105"
+                      className="bg-gradient-primary w-full rounded-t-md transition-all duration-500 hover:shadow-lg hover:scale-105"
                       style={{
                         height: `${Math.max(20, (item.sales / Math.max(...dashboardData.salesData.map((d) => d.sales || 0))) * 100)}%`,
                       }}
@@ -386,9 +386,7 @@ const AdminDashboard = () => {
 
 const StatCard = ({ title, value, icon, linkTo, className, trend, trendUp }) => {
   return (
-    <div
-      className={`bg-white/10 backdrop-blur-md rounded-lg shadow-lg border border-white/20 p-6 hover:shadow-xl transition-all duration-300 hover:translate-y-[-5px] ${className}`}
-    >
+    <div className={`card-glass p-6 ${className}`}>
       <div className="flex justify-between items-center">
         <div>
           <p className="text-sm text-white/80">{title}</p>

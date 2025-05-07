@@ -41,22 +41,22 @@ const AdminLogin = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-900 via-purple-800 to-red-800 px-4">
+    <div className="min-h-screen flex items-center justify-center px-4">
       <button
         onClick={toggleTheme}
-        className="absolute top-4 right-4 p-2 rounded-full bg-white/20 hover:bg-white/30 text-white transition-all duration-300 hover:scale-110 active:scale-95"
+        className="absolute top-4 right-4 p-2 rounded-full bg-glass hover:bg-white/30 text-white transition-all duration-300 hover:scale-110 active:scale-95"
         aria-label="Toggle theme"
       >
         {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
       </button>
 
       <div className="w-full max-w-md">
-        <div className="bg-white/10 backdrop-blur-md rounded-lg shadow-2xl p-8 border border-white/20 animate-float">
+        <div className="bg-glass rounded-2xl shadow-2xl p-8 animate-float">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/20 mb-4 shadow-lg">
-              <Lock className="h-8 w-8 text-white" />
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-primary mb-4 shadow-lg">
+              <Lock className="h-10 w-10 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-white">Star Electricals</h1>
+            <h1 className="text-3xl font-bold text-white">Star Electricals</h1>
             <p className="text-white/80 mt-2">Admin Portal</p>
           </div>
 
@@ -103,7 +103,7 @@ const AdminLogin = () => {
 
             <button
               type="submit"
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-lg text-sm font-medium text-white bg-gradient-to-r from-blue-600 via-purple-600 to-red-600 hover:from-blue-700 hover:via-purple-700 hover:to-red-700 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-300 hover:shadow-xl hover:scale-105 active:scale-95"
+              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-lg text-sm font-medium text-white bg-gradient-primary hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-300 hover:shadow-xl hover:scale-105 active:scale-95"
               disabled={isLoading}
             >
               {isLoading ? (

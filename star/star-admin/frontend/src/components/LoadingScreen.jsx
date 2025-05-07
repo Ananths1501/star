@@ -37,7 +37,7 @@ const LoadingScreen = ({ onLoadingComplete }) => {
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-b from-gradient-blue via-gradient-purple to-gradient-red transition-opacity duration-500 ${fadeOut ? "opacity-0" : "opacity-100"}`}
+      className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-gradient-primary transition-opacity duration-500 ${fadeOut ? "opacity-0" : "opacity-100"}`}
     >
       <div className="w-full max-w-md">
         {!videoEnded ? (

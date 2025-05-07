@@ -32,8 +32,18 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-900 via-purple-800 to-red-800 transition-colors duration-300">
-      <Toaster position="top-right" />
+    <div className="min-h-screen bg-gradient-primary">
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          style: {
+            background: "rgba(255, 255, 255, 0.1)",
+            color: "#fff",
+            backdropFilter: "blur(10px)",
+            border: "1px solid rgba(255, 255, 255, 0.2)",
+          },
+        }}
+      />
       <Routes>
         <Route path="/" element={<Navigate to="/admin/login" replace />} />
         <Route path="/admin/login" element={<AdminLogin />} />

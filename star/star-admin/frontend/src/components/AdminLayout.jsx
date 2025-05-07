@@ -37,7 +37,7 @@ const AdminLayout = () => {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gradient-to-b from-blue-900 via-purple-800 to-red-800 transition-colors duration-300">
+    <div className="flex h-screen overflow-hidden">
       {/* Animated Sidebar */}
       <AnimatedSidebar
         sidebarOpen={sidebarOpen}
@@ -50,7 +50,7 @@ const AdminLayout = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="bg-white/10 backdrop-blur-md shadow-lg z-10 transition-all duration-300">
+        <header className="bg-glass z-10 transition-all duration-300">
           <div className="flex items-center justify-between p-4">
             <div className="flex items-center">
               <button
@@ -81,14 +81,14 @@ const AdminLayout = () => {
                   onClick={() => setShowNotifications(!showNotifications)}
                 >
                   <Bell size={20} className="text-white" />
-                  <span className="absolute top-0 right-0 h-4 w-4 rounded-full bg-red-500 text-white text-xs flex items-center justify-center">
+                  <span className="absolute top-0 right-0 h-4 w-4 rounded-full bg-primary-pink text-white text-xs flex items-center justify-center">
                     {notifications.length}
                   </span>
                 </button>
 
                 {/* Notifications dropdown */}
                 {showNotifications && (
-                  <div className="absolute right-0 mt-2 w-80 bg-white/10 backdrop-blur-md rounded-lg shadow-lg border border-white/20 z-50">
+                  <div className="absolute right-0 mt-2 w-80 bg-glass rounded-lg shadow-lg z-50">
                     <div className="p-3 border-b border-white/20">
                       <h3 className="font-medium text-white">Notifications</h3>
                     </div>
@@ -115,7 +115,7 @@ const AdminLayout = () => {
               <ThemeToggle />
 
               <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-red-500 flex items-center justify-center text-white">
+                <div className="w-8 h-8 rounded-full bg-gradient-primary flex items-center justify-center text-white">
                   <User size={18} />
                 </div>
                 <span className="font-medium text-white hidden md:block">{user?.adminId || "Admin"}</span>

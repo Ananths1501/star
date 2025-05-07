@@ -1,20 +1,67 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Home from './pages/Home';
-import UserHome from './pages/UserHome';
-import Cart from './pages/Cart';
-import Order from './pages/Order';
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
+import GuestPage from "./pages/GuestPage"
+import LoginPage from "./pages/LoginPage"
+import RegisterPage from "./pages/RegisterPage"
+import HomePage from "./pages/HomePage"
+import CartPage from "./pages/CartPage"
+import ServicesPage from "./pages/ServicesPage"
+import Navbar from "./components/Navbar"
+import Footer from "./components/Footer"
+import { AuthProvider } from "./context/AuthContext"
+import { CartProvider } from "./context/CartContext"
+import ProtectedRoute from "./components/ProtectedRoute"
+import ErrorBoundary from "./components/ErrorBoundary"
+import { Toaster } from "react-hot-toast"
+import "./App.css"
 
-const App = () => {
+function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/:username/home" element={<UserHome />} />
-        <Route path="/cart" element={<Cart />} />
-        <Route path="/order" element={<Order />} />
-      </Routes>
-    </Router>
-  );
-};
+    <ErrorBoundary showDetails={false}>
+      <AuthProvider>
+        <CartProvider>
+          <Router>
+            <div className="app-container min-h-screen flex flex-col bg-gray-50">
+              <Navbar />
+              <main className="main-content flex-grow pt-20">
+                <Routes>
+                  <Route path="/" element={<GuestPage />} />
+                  <Route path="/user/login" element={<LoginPage />} />
+                  <Route path="/user/register" element={<RegisterPage />} />
+                  <Route
+                    path="/:userId/home"
+                    element={
+                      <ProtectedRoute>
+                        <HomePage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/:userId/cart"
+                    element={
+                      <ProtectedRoute>
+                        <CartPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/:userId/services"
+                    element={
+                      <ProtectedRoute>
+                        <ServicesPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </main>
+              <Footer />
+              <Toaster position="top-right" />
+            </div>
+          </Router>
+        </CartProvider>
+      </AuthProvider>
+    </ErrorBoundary>
+  )
+}
 
-export default App;
+export default App

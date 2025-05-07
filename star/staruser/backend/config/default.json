@@ -1,0 +1,5 @@
+{
+    "mongoURI": "mongodb://localhost:27017/star",
+    "jwtSecret": "star_electricals_secret_key",
+    "jwtExpiration": "24h"
+  }

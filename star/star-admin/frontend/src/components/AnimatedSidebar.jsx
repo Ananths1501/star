@@ -67,16 +67,13 @@ const AnimatedSidebar = ({ sidebarOpen, setSidebarOpen, handleLogout, user }) =>
       ref={sidebarRef}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      // "Carpet opening" width animation with transform-origin on the left edge.
-      className={`fixed top-0 left-0 h-full z-50 bg-gray-800 text-white transition-all duration-300 ease-out transform origin-left ${
+      className={`fixed top-0 left-0 h-full z-50 bg-glass text-white transition-all duration-300 ease-out transform origin-left ${
         sidebarOpen ? "w-64" : "w-20"
       }`}
     >
       {/* Mobile sidebar overlay */}
       <div
-        className={`fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden ${
-          sidebarOpen ? "block" : "hidden"
-        }`}
+        className={`fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden ${sidebarOpen ? "block" : "hidden"}`}
         onClick={() => setSidebarOpen(false)}
       ></div>
 
@@ -113,7 +110,7 @@ const AnimatedSidebar = ({ sidebarOpen, setSidebarOpen, handleLogout, user }) =>
               >
                 {/* Animated background glow */}
                 {(hoveredItem === item.path || location.pathname === item.path) && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-600/30 via-purple-600/30 to-red-600/30 rounded-lg blur-sm transform scale-105 transition-transform duration-300"></div>
+                  <div className="absolute inset-0 bg-gradient-primary rounded-lg blur-sm transform scale-105 transition-transform duration-300"></div>
                 )}
                 <div className="relative z-10 flex items-center w-full">
                   <div className="transition-all duration-300">{item.icon}</div>
@@ -124,9 +121,7 @@ const AnimatedSidebar = ({ sidebarOpen, setSidebarOpen, handleLogout, user }) =>
                   >
                     {item.label}
                   </span>
-                  {location.pathname === item.path && (
-                    <ChevronRight className="ml-auto h-4 w-4 text-white" />
-                  )}
+                  {location.pathname === item.path && <ChevronRight className="ml-auto h-4 w-4 text-white" />}
                 </div>
               </button>
             ))}
@@ -136,24 +131,20 @@ const AnimatedSidebar = ({ sidebarOpen, setSidebarOpen, handleLogout, user }) =>
         {/* Footer */}
         <div className="absolute bottom-0 w-full p-4 border-t border-white/20">
           <div className="flex items-center mb-4 px-4 py-2 rounded-lg bg-white/10">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-red-500 flex items-center justify-center text-white">
+            <div className="w-8 h-8 rounded-full bg-gradient-primary flex items-center justify-center text-white">
               {user?.name?.charAt(0) || "A"}
             </div>
             {sidebarOpen && (
               <div className="ml-3 transition-all duration-300">
-                <p className="text-sm font-medium text-white">
-                  {user?.name || "Admin User"}
-                </p>
-                <p className="text-xs text-white/70">
-                  {user?.role || "Administrator"}
-                </p>
+                <p className="text-sm font-medium text-white">{user?.name || "Admin User"}</p>
+                <p className="text-xs text-white/70">{user?.role || "Administrator"}</p>
               </div>
             )}
           </div>
 
           <button
             onClick={handleLogout}
-            className="flex items-center w-full px-4 py-3 rounded-lg bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-red-600/20 hover:from-blue-600/30 hover:via-purple-600/30 hover:to-red-600/30 text-white transition-all duration-300"
+            className="flex items-center w-full px-4 py-3 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-all duration-300"
           >
             <LogOut size={20} />
             <span
@@ -170,7 +161,7 @@ const AnimatedSidebar = ({ sidebarOpen, setSidebarOpen, handleLogout, user }) =>
       {/* Mobile toggle when closed */}
       <button
         onClick={() => setSidebarOpen(true)}
-        className={`fixed top-4 left-4 z-30 p-2 rounded-md bg-gradient-to-r from-blue-600 via-purple-600 to-red-600 text-white md:hidden ${
+        className={`fixed top-4 left-4 z-30 p-2 rounded-md bg-gradient-primary text-white md:hidden ${
           sidebarOpen ? "hidden" : "block"
         }`}
       >
