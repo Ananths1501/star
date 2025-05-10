@@ -21,20 +21,22 @@ const SearchBar = ({ onSearch, className }) => {
   }
 
   return (
-    <form onSubmit={handleSubmit} className={`relative flex-grow max-w-xl ${className || ""}`}>
-      <input
-        type="text"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        placeholder="Search for electrical products..."
-        className="w-full px-4 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-      />
-      <button
-        type="submit"
-        className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-r-md transition-colors"
-      >
-        <i className="fas fa-search"></i>
-      </button>
+    <form onSubmit={handleSubmit} className={`relative flex-grow ${className || ""}`}>
+      <div className="flex">
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Search for electrical products..."
+          className="w-full px-5 py-3 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-700"
+        />
+        <button
+          type="submit"
+          className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-r-md transition-colors"
+        >
+          <i className="fas fa-search"></i>
+        </button>
+      </div>
     </form>
   )
 }

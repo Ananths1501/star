@@ -51,17 +51,14 @@ const Navbar = () => {
       className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? "bg-gradient-primary shadow-lg" : "bg-gradient-primary"}`}
     >
       <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center h-20">
+        {/* First row with logo and navigation */}
+        <div className="flex justify-between items-center h-24">
           <Link to="/" className="flex items-center shrink-0">
-            <span className="text-white text-2xl font-bold tracking-tight">
+            <span className="text-white text-3xl font-bold tracking-tight">
               <i className="fas fa-bolt mr-2"></i>
               Star Electricals
             </span>
           </Link>
-
-          <div className="hidden md:block mx-4">
-            <SearchBar className="w-full" />
-          </div>
 
           <div className="md:hidden">
             <button onClick={toggleMobileMenu} className="text-white focus:outline-none">
@@ -154,6 +151,11 @@ const Navbar = () => {
               </li>
             )}
           </ul>
+        </div>
+
+        {/* Second row with search bar */}
+        <div className="py-3 hidden md:block">
+          <SearchBar className="w-full max-w-4xl mx-auto" />
         </div>
       </div>
 

@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom"
 import { CartContext } from "../context/CartContext"
 import { AuthContext } from "../context/AuthContext"
 import { orderService } from "../services/api"
-import "./CartPage.css"
 
 const CartPage = () => {
   const { cart, total, updateQuantity, removeFromCart, clearCart } = useContext(CartContext)
@@ -57,13 +56,13 @@ const CartPage = () => {
         paymentStatus: "Paid", // Assuming payment is made on delivery
         customer: user.name,
         customerPhone: user.phone || "",
-        status: "Confirmed",
-        orderType: "Online",
+        status: "Pending", // Changed from "Confirmed" to "Pending" to match enum
+        orderType: "Online", // Explicitly set orderType
       }
 
       const response = await orderService.createOrder(orderData)
 
-      setSuccess(`Order placed successfully! Order number: ${response.data.orderNumber}`)
+      setSuccess(`Order placed successfully! Order number: ${response.data.order.orderNumber}`)
       clearCart()
 
       // Redirect to orders page after 3 seconds
@@ -97,11 +96,11 @@ const CartPage = () => {
 
   if (cart.length === 0) {
     return (
-      <div className="cart-empty">
-        <h2 className="text-purple-700">Your Cart is Empty</h2>
-        <p>Add some products to your cart to see them here.</p>
+      <div className="flex flex-col items-center justify-center min-h-[50vh] text-center p-5">
+        <h2 className="text-2xl font-bold text-purple-700 mb-4">Your Cart is Empty</h2>
+        <p className="text-gray-600 mb-6">Add some products to your cart to see them here.</p>
         <button
-          className="continue-shopping-btn hover:border-purple-500 hover:text-purple-700"
+          className="px-6 py-2 border border-gray-300 rounded-md hover:border-purple-500 hover:text-purple-700 transition-colors"
           onClick={() => navigate(`/${user._id}/home`)}
         >
           Continue Shopping
@@ -111,114 +110,123 @@ const CartPage = () => {
   }
 
   return (
-    <div className="cart-page">
-      <h1 className="cart-title text-purple-700">Your Shopping Cart</h1>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold mb-6 text-center text-purple-700">Your Shopping Cart</h1>
 
-      {error && <div className="error-message">{error}</div>}
-      {success && <div className="success-message">{success}</div>}
+      {error && <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">{error}</div>}
+      {success && <div className="mb-4 p-3 bg-green-100 text-green-700 rounded-md">{success}</div>}
 
-      <div className="cart-container">
-        <div className="cart-items">
-          <div className="cart-header bg-gradient-card">
-            <div className="cart-header-product">Product</div>
-            <div className="cart-header-price">Price</div>
-            <div className="cart-header-quantity">Quantity</div>
-            <div className="cart-header-total">Total</div>
-            <div className="cart-header-action"></div>
+      <div className="flex flex-col md:flex-row gap-6">
+        <div className="bg-white rounded-lg shadow-md overflow-hidden flex-grow">
+          <div className="hidden md:grid grid-cols-12 gap-4 p-4 bg-gray-50 font-medium text-gray-700">
+            <div className="col-span-6">Product</div>
+            <div className="col-span-2">Price</div>
+            <div className="col-span-2">Quantity</div>
+            <div className="col-span-2">Total</div>
           </div>
 
           {cart.map((item) => {
             const itemTotal = (item.price - item.price * (item.discount / 100)) * item.quantity
 
             return (
-              <div className="cart-item" key={item._id}>
-                <div className="cart-item-product">
-                  <img
-                    src={getImageUrl(item) || "/placeholder.svg"}
-                    alt={item.name}
-                    onError={() => handleImageError(item._id)}
-                  />
-                  <div className="cart-item-details">
-                    <h3 className="text-purple-700">{item.name}</h3>
-                    <p>{item.brand}</p>
+              <div key={item._id} className="border-t border-gray-200 p-4">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                  <div className="col-span-6 flex items-center">
+                    <img
+                      src={getImageUrl(item) || "/placeholder.svg"}
+                      alt={item.name}
+                      className="w-20 h-20 object-cover rounded mr-4"
+                      onError={() => handleImageError(item._id)}
+                    />
+                    <div>
+                      <h3 className="font-medium text-purple-700">{item.name}</h3>
+                      <p className="text-sm text-gray-500">{item.brand}</p>
+                    </div>
                   </div>
-                </div>
 
-                <div className="cart-item-price">
-                  {item.discount > 0 ? (
-                    <>
-                      <span className="discounted-price text-pink-500">
-                        ₹{(item.price - item.price * (item.discount / 100)).toFixed(2)}
-                      </span>
-                      <span className="original-price">₹{item.price.toFixed(2)}</span>
-                    </>
-                  ) : (
-                    <span className="text-purple-700">₹{item.price.toFixed(2)}</span>
-                  )}
-                </div>
+                  <div className="col-span-2 md:text-left">
+                    <div className="md:hidden font-medium text-gray-700 mb-1">Price:</div>
+                    {item.discount > 0 ? (
+                      <div>
+                        <span className="font-bold text-pink-500">
+                          ₹{(item.price - item.price * (item.discount / 100)).toFixed(2)}
+                        </span>
+                        <div className="text-sm text-gray-400 line-through">₹{item.price.toFixed(2)}</div>
+                      </div>
+                    ) : (
+                      <span className="font-medium text-purple-700">₹{item.price.toFixed(2)}</span>
+                    )}
+                  </div>
 
-                <div className="cart-item-quantity">
-                  <button
-                    className="quantity-btn bg-gray-100 hover:bg-gray-200"
-                    onClick={() => handleQuantityChange(item._id, item.quantity - 1)}
-                    disabled={item.quantity <= 1}
-                  >
-                    -
-                  </button>
-                  <input
-                    type="number"
-                    min="1"
-                    value={item.quantity}
-                    onChange={(e) => handleQuantityChange(item._id, e.target.value)}
-                    className="border-gray-300 focus:border-purple-500 focus:ring focus:ring-purple-200"
-                  />
-                  <button
-                    className="quantity-btn bg-gray-100 hover:bg-gray-200"
-                    onClick={() => handleQuantityChange(item._id, item.quantity + 1)}
-                  >
-                    +
-                  </button>
-                </div>
+                  <div className="col-span-2">
+                    <div className="md:hidden font-medium text-gray-700 mb-1">Quantity:</div>
+                    <div className="flex items-center">
+                      <button
+                        className="w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-l-md"
+                        onClick={() => handleQuantityChange(item._id, item.quantity - 1)}
+                        disabled={item.quantity <= 1}
+                      >
+                        -
+                      </button>
+                      <input
+                        type="number"
+                        min="1"
+                        value={item.quantity}
+                        onChange={(e) => handleQuantityChange(item._id, e.target.value)}
+                        className="w-12 h-8 text-center border-y border-gray-300"
+                      />
+                      <button
+                        className="w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-r-md"
+                        onClick={() => handleQuantityChange(item._id, item.quantity + 1)}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
 
-                <div className="cart-item-total text-purple-700">₹{itemTotal.toFixed(2)}</div>
-
-                <div className="cart-item-action">
-                  <button
-                    className="remove-btn bg-pink-100 text-pink-600 hover:bg-pink-200"
-                    onClick={() => handleRemoveItem(item._id)}
-                  >
-                    ×
-                  </button>
+                  <div className="col-span-1 md:col-span-2 flex justify-between items-center">
+                    <div>
+                      <div className="md:hidden font-medium text-gray-700 mb-1">Total:</div>
+                      <span className="font-bold text-purple-700">₹{itemTotal.toFixed(2)}</span>
+                    </div>
+                    <button
+                      className="w-8 h-8 flex items-center justify-center bg-red-100 text-red-600 hover:bg-red-200 rounded-full"
+                      onClick={() => handleRemoveItem(item._id)}
+                    >
+                      ×
+                    </button>
+                  </div>
                 </div>
               </div>
             )
           })}
         </div>
 
-        <div className="cart-summary bg-gradient-card">
-          <h2 className="text-purple-700">Order Summary</h2>
+        <div className="bg-white rounded-lg shadow-md p-6 md:w-80 h-fit">
+          <h2 className="text-xl font-bold mb-4 text-purple-700">Order Summary</h2>
 
-          <div className="summary-row">
-            <span>Subtotal</span>
-            <span>₹{total.toFixed(2)}</span>
+          <div className="border-b border-gray-200 pb-4 mb-4">
+            <div className="flex justify-between mb-2">
+              <span className="text-gray-600">Subtotal</span>
+              <span>₹{total.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between mb-2">
+              <span className="text-gray-600">Shipping</span>
+              <span>Free</span>
+            </div>
           </div>
 
-          <div className="summary-row">
-            <span>Shipping</span>
-            <span>Free</span>
+          <div className="flex justify-between font-bold text-lg mb-6">
+            <span className="text-gray-800">Total</span>
+            <span className="text-purple-700">₹{total.toFixed(2)}</span>
           </div>
 
-          <div className="summary-row total text-purple-700">
-            <span>Total</span>
-            <span>₹{total.toFixed(2)}</span>
-          </div>
-
-          <div className="payment-method">
-            <h3>Payment Method</h3>
+          <div className="mb-6">
+            <label className="block text-gray-700 font-medium mb-2">Payment Method</label>
             <select
               value={paymentMethod}
               onChange={(e) => setPaymentMethod(e.target.value)}
-              className="border-gray-300 focus:border-purple-500 focus:ring focus:ring-purple-200"
+              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             >
               <option value="Cash">Cash on Delivery</option>
               <option value="Card">Card on Delivery</option>
@@ -226,12 +234,15 @@ const CartPage = () => {
             </select>
           </div>
 
-          <button className="checkout-btn bg-gradient-primary hover:bg-gradient-primary-hover" onClick={showPreview}>
+          <button
+            className="w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-md font-medium mb-3 transition-colors"
+            onClick={showPreview}
+          >
             Proceed to Checkout
           </button>
 
           <button
-            className="continue-shopping-btn hover:border-purple-500 hover:text-purple-700"
+            className="w-full py-3 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-md font-medium transition-colors"
             onClick={() => navigate(`/${user._id}/home`)}
           >
             Continue Shopping
@@ -241,7 +252,7 @@ const CartPage = () => {
 
       {/* Order Preview Modal */}
       {showOrderPreview && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 p-4 bg-black/60">
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
@@ -328,7 +339,7 @@ const CartPage = () => {
                 <button
                   onClick={handleCheckout}
                   disabled={loading}
-                  className="flex-1 py-2 px-4 bg-gradient-primary text-white rounded-md hover:opacity-90 transition-colors"
+                  className="flex-1 py-2 px-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-md font-medium transition-colors"
                 >
                   {loading ? "Processing..." : "Confirm Order"}
                 </button>

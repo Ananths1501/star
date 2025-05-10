@@ -103,7 +103,7 @@ const MyBookingsPage = () => {
           <p className="text-gray-600 mb-4">You haven't booked any services yet.</p>
           <Link
             to="/services"
-            className="inline-block bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded transition-colors"
+            className="inline-block bg-purple-600 hover:bg-purple-700 text-black px-6 py-2 rounded transition-colors"
           >
             Book a Service
           </Link>
@@ -215,7 +215,7 @@ const MyBookingsPage = () => {
                           e.stopPropagation()
                           handleCancelBooking(booking._id)
                         }}
-                        className="mt-4 w-full py-2 px-4 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors text-sm"
+                        className="mt-4 w-full py-2 px-4 bg-red-600 hover:bg-red-700 text-black rounded-md transition-colors text-sm"
                       >
                         Cancel Booking
                       </button>

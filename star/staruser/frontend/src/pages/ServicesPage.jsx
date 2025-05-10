@@ -7,7 +7,6 @@ import ServiceCard from "../components/ServiceCard"
 import WorkerCard from "../components/WorkerCard"
 import BookingForm from "../components/BookingForm"
 import { serviceService } from "../services/api"
-import "./ServicesPage.css"
 
 const ServicesPage = () => {
   const [services, setServices] = useState([])
@@ -77,40 +76,39 @@ const ServicesPage = () => {
   }
 
   if (error && !selectedService) {
-    return <div className="error text-pink-600 text-center mt-24">{error}</div>
+    return <div className="text-center text-pink-600 mt-24">{error}</div>
   }
 
   return (
-    <div className="services-page mt-20">
-      <h1 className="services-title text-purple-700">Our Services</h1>
+    <div className="container mx-auto px-4 py-8 mt-20">
+      <h1 className="text-2xl font-bold text-center text-purple-700 mb-6">Our Services</h1>
 
-      {error && <div className="error-message mb-4">{error}</div>}
-      {success && <div className="success-message mb-4">{success}</div>}
+      {error && <div className="p-3 bg-red-100 text-red-700 rounded-md mb-4">{error}</div>}
+      {success && <div className="p-3 bg-green-100 text-green-700 rounded-md mb-4">{success}</div>}
 
       {(selectedService || selectedWorker) && (
-        <button className="back-btn hover:bg-gray-100 hover:text-purple-700 mb-4" onClick={goBack}>
+        <button
+          className="mb-4 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100 hover:text-purple-700 transition-colors"
+          onClick={goBack}
+        >
           ← Back
         </button>
       )}
 
       {!selectedService ? (
-        <div className="services-grid">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-8">
           {services.map((service) => (
-            <div className="service-item" key={service._id}>
-              <ServiceCard service={service} onSelectService={handleServiceSelect} />
-            </div>
+            <ServiceCard key={service._id} service={service} onSelectService={handleServiceSelect} />
           ))}
         </div>
       ) : (
-        <div className="workers-section">
+        <div>
           <h2 className="text-xl font-bold text-purple-700 mb-4">{selectedService.serviceType} Workers</h2>
 
           {workers.length > 0 ? (
-            <div className="workers-grid">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
               {workers.map((worker) => (
-                <div className="worker-item" key={worker._id}>
-                  <WorkerCard worker={worker} onBookWorker={handleWorkerSelect} />
-                </div>
+                <WorkerCard key={worker._id} worker={worker} onBookWorker={handleWorkerSelect} />
               ))}
             </div>
           ) : (

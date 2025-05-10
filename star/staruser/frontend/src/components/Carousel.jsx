@@ -51,7 +51,7 @@ const Carousel = ({ slides }) => {
           <div key={index} className="min-w-full h-full relative">
             <img src={slide.image || "/placeholder.svg"} alt={slide.title} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent flex flex-col justify-end p-6 md:p-10">
-              <h2 className="text-white text-2xl md:text-4xl font-bold mb-2 md:mb-4 animate-fade-in-up">
+              <h2 className="text-black text-2xl md:text-4xl font-bold mb-2 md:mb-4 animate-fade-in-up">
                 {slide.title}
               </h2>
               <p className="text-gray-200 text-sm md:text-lg mb-4 md:mb-6 max-w-xl animate-fade-in-up animation-delay-200">
@@ -60,7 +60,7 @@ const Carousel = ({ slides }) => {
               {slide.button && (
                 <button
                   onClick={slide.button.onClick}
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-md font-medium transition-all duration-300 transform hover:scale-105 shadow-lg inline-block animate-fade-in-up animation-delay-400 w-auto"
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-black px-6 py-3 rounded-md font-medium transition-all duration-300 transform hover:scale-105 shadow-lg inline-block animate-fade-in-up animation-delay-400 w-auto"
                 >
                   {slide.button.text}
                 </button>
@@ -71,14 +71,14 @@ const Carousel = ({ slides }) => {
       </div>
 
       <button
-        className="absolute top-1/2 left-4 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 focus:outline-none"
+        className="absolute top-1/2 left-4 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-black w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 focus:outline-none"
         onClick={prevSlide}
       >
         <i className="fas fa-chevron-left"></i>
       </button>
 
       <button
-        className="absolute top-1/2 right-4 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 focus:outline-none"
+        className="absolute top-1/2 right-4 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-black w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 focus:outline-none"
         onClick={nextSlide}
       >
         <i className="fas fa-chevron-right"></i>

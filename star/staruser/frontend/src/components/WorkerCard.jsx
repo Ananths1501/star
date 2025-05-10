@@ -52,14 +52,14 @@ const WorkerCard = ({ worker, onBookWorker }) => {
       </div>
       <div className="p-4 flex flex-col flex-grow bg-gradient-card">
         <h3 className="text-lg font-semibold text-purple-700 mb-1">{worker.name}</h3>
-        <p className="text-cyan-600 font-medium text-sm mb-2">{worker.serviceType}</p>
-        <p className="text-pink-600 font-bold mb-3">₹{worker.feesPerDay} per day</p>
-        <div className="mt-auto space-y-2 text-sm text-gray-600">
+        <p className="text-cyan-700 font-medium text-sm mb-2">{worker.serviceType}</p>
+        <p className="text-pink-700 font-bold mb-3">₹{worker.feesPerDay} per day</p>
+        <div className="mt-auto space-y-2 text-sm text-gray-700">
           <p className="flex items-center">
-            <i className="fas fa-phone-alt mr-2 text-purple-500"></i> {worker.phone}
+            <i className="fas fa-phone-alt mr-2 text-purple-600"></i> {worker.phone}
           </p>
           <p className="flex items-center">
-            <i className="fas fa-map-marker-alt mr-2 text-purple-500"></i> {worker.address}
+            <i className="fas fa-map-marker-alt mr-2 text-purple-600"></i> {worker.address}
           </p>
         </div>
       </div>

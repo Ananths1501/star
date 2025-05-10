@@ -1,330 +1,272 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
-import { bookingService } from "../services/api"
-import toast from "react-hot-toast"
+import { useContext, useState, useEffect } from "react"
+import { Link, useNavigate, useLocation } from "react-router-dom"
+import { AuthContext } from "../context/AuthContext"
+import { CartContext } from "../context/CartContext"
+import SearchBar from "./SearchBar"
 
-const BookingForm = ({ worker, service, user, onClose }) => {
-  const [step, setStep] = useState(1)
-  const [bookingDetails, setBookingDetails] = useState({
-    date: "",
-    startTime: "",
-    endTime: "",
-    fullDay: false,
-    address: user?.address || "",
-    phone: user?.phone || "",
-    alternatePhone: "",
-  })
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const [availability, setAvailability] = useState(null)
+const Navbar = () => {
+  const { user, logout } = useContext(AuthContext)
+  const { cart } = useContext(CartContext)
   const navigate = useNavigate()
+  const location = useLocation()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
 
   useEffect(() => {
-    if (user) {
-      setBookingDetails((prev) => ({
-        ...prev,
-        address: user.address || "",
-        phone: user.phone || "",
-      }))
-    }
-  }, [user])
-
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target
-    setBookingDetails((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }))
-
-    // Reset availability check when inputs change
-    setAvailability(null)
-  }
-
-  const checkAvailability = async () => {
-    setError(null)
-    setLoading(true)
-
-    if (!bookingDetails.date) {
-      setError("Please select a date")
-      setLoading(false)
-      return
-    }
-
-    if (!bookingDetails.fullDay && (!bookingDetails.startTime || !bookingDetails.endTime)) {
-      setError("Please select both start and end time")
-      setLoading(false)
-      return
-    }
-
-    try {
-      const response = await bookingService.checkAvailability({
-        workerId: worker._id,
-        date: bookingDetails.date,
-        startTime: bookingDetails.fullDay ? "09:00" : bookingDetails.startTime,
-        endTime: bookingDetails.fullDay ? "18:00" : bookingDetails.endTime,
-        fullDay: bookingDetails.fullDay,
-      })
-
-      setAvailability(response.data.available)
-
-      if (response.data.available) {
-        setStep(2)
+    const handleScroll = () => {
+      if (window.scrollY > 10) {
+        setScrolled(true)
+      } else {
+        setScrolled(false)
       }
-    } catch (err) {
-      console.error("Error checking availability:", err)
-      setError(err.response?.data?.message || "Failed to check availability")
-    } finally {
-      setLoading(false)
     }
+
+    window.addEventListener("scroll", handleScroll)
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
+
+  const handleLogout = () => {
+    logout()
+    navigate("/")
   }
 
-  const handleAddressChange = () => {
-    if (bookingDetails.address === user.address) {
-      setBookingDetails((prev) => ({
-        ...prev,
-        address: "",
-      }))
-    } else {
-      setBookingDetails((prev) => ({
-        ...prev,
-        address: user.address || "",
-      }))
-    }
+  const toggleMobileMenu = () => {
+    setMobileMenuOpen(!mobileMenuOpen)
   }
 
-  const confirmBooking = async () => {
-    setError(null)
-    setLoading(true)
-
-    if (!bookingDetails.address) {
-      setError("Please provide an address")
-      setLoading(false)
-      return
+  const getProfileImageUrl = () => {
+    if (!user || !user.profilePic) {
+      return `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || "User")}`
     }
 
-    if (!bookingDetails.phone) {
-      setError("Please provide a phone number")
-      setLoading(false)
-      return
-    }
-
-    try {
-      await bookingService.createBooking({
-        worker: worker._id,
-        service: service._id,
-        date: bookingDetails.date,
-        startTime: bookingDetails.fullDay ? "09:00" : bookingDetails.startTime,
-        endTime: bookingDetails.fullDay ? "18:00" : bookingDetails.endTime,
-        fullDay: bookingDetails.fullDay,
-        address: bookingDetails.address,
-        phone: bookingDetails.phone,
-        alternatePhone: bookingDetails.alternatePhone || null,
-      })
-
-      toast.success("Service booked successfully!")
-      onClose()
-    } catch (err) {
-      console.error("Booking error:", err)
-      setError(err.response?.data?.message || "Failed to book service")
-    } finally {
-      setLoading(false)
-    }
+    // Use a direct URL or import.meta.env for Vite projects
+    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000"
+    return user.profilePic.startsWith("/uploads") ? `${apiUrl}${user.profilePic}` : user.profilePic
   }
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-lg max-w-xl w-full max-h-[90vh] overflow-y-auto">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold text-purple-700">{step === 1 ? "Check Availability" : "Confirm Booking"}</h2>
-        <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-          <i className="fas fa-times"></i>
-        </button>
-      </div>
+    <nav
+      className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? "bg-gradient-primary shadow-lg" : "bg-gradient-primary"}`}
+    >
+      <div className="container mx-auto px-4">
+        {/* First row with logo and navigation */}
+        <div className="flex justify-between items-center h-28">
+          <Link to="/" className="flex items-center shrink-0">
+            <span className="text-white text-3xl font-bold tracking-tight">
+              <i className="fas fa-bolt mr-2"></i>
+              Star Electricals
+            </span>
+          </Link>
 
-      {error && <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md text-sm">{error}</div>}
-
-      {step === 1 && (
-        <>
-          <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg mb-6">
-            <img
-              src={worker.image.startsWith("/uploads") ? `http://localhost:3000${worker.image}` : worker.image}
-              alt={worker.name}
-              className="w-16 h-16 rounded-full object-cover"
-              onError={(e) => {
-                e.target.onerror = null
-                e.target.src = "/placeholder-worker.jpg"
-              }}
-            />
-            <div>
-              <h3 className="font-medium text-purple-700">{worker.name}</h3>
-              <p className="text-sm text-gray-600">{worker.serviceType}</p>
-              <p className="text-sm font-semibold text-pink-600">₹{worker.feesPerDay} per day</p>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Select Date</label>
-              <input
-                type="date"
-                name="date"
-                value={bookingDetails.date}
-                onChange={handleInputChange}
-                min={new Date().toISOString().split("T")[0]}
-                required
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring focus:ring-purple-500 focus:ring-opacity-50"
-              />
-            </div>
-
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="fullDay"
-                name="fullDay"
-                checked={bookingDetails.fullDay}
-                onChange={handleInputChange}
-                className="mr-2 rounded text-purple-600 focus:ring-purple-500"
-              />
-              <label htmlFor="fullDay" className="text-sm font-medium text-gray-700">
-                Full Day (9 AM - 6 PM)
-              </label>
-            </div>
-
-            {!bookingDetails.fullDay && (
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
-                  <input
-                    type="time"
-                    name="startTime"
-                    value={bookingDetails.startTime}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring focus:ring-purple-500 focus:ring-opacity-50"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
-                  <input
-                    type="time"
-                    name="endTime"
-                    value={bookingDetails.endTime}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring focus:ring-purple-500 focus:ring-opacity-50"
-                  />
-                </div>
-              </div>
-            )}
-
-            {availability === false && (
-              <div className="p-3 bg-red-100 text-red-700 rounded-md text-sm">
-                Worker is not available at the selected time. Please choose a different time or date.
-              </div>
-            )}
-
-            <button
-              onClick={checkAvailability}
-              disabled={loading}
-              className="w-full py-2 px-4 bg-gradient-primary text-white rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 transition-colors"
-            >
-              {loading ? "Checking..." : "Check Availability"}
+          <div className="md:hidden">
+            <button onClick={toggleMobileMenu} className="text-white focus:outline-none">
+              <i className={`fas ${mobileMenuOpen ? "fa-times" : "fa-bars"} text-2xl`}></i>
             </button>
           </div>
-        </>
-      )}
 
-      {step === 2 && (
-        <>
-          <div className="border-b border-gray-200 pb-4 mb-4">
-            <h3 className="font-medium text-gray-900 mb-2">Booking Details</h3>
-            <div className="space-y-2 text-sm text-gray-600">
-              <p>
-                <span className="font-medium">Service:</span> {service.serviceType}
-              </p>
-              <p>
-                <span className="font-medium">Worker:</span> {worker.name}
-              </p>
-              <p>
-                <span className="font-medium">Date:</span> {new Date(bookingDetails.date).toLocaleDateString()}
-              </p>
-              <p>
-                <span className="font-medium">Time:</span>{" "}
-                {bookingDetails.fullDay
-                  ? "Full Day (9 AM - 6 PM)"
-                  : `${bookingDetails.startTime} - ${bookingDetails.endTime}`}
-              </p>
-              <p>
-                <span className="font-medium">Fees:</span> ₹{worker.feesPerDay}{" "}
-                {bookingDetails.fullDay ? "(Full day)" : "(Hourly rate will apply)"}
-              </p>
-            </div>
+          <ul className="hidden md:flex items-center space-x-6">
+            <li>
+              <Link
+                to="/"
+                className={`text-white hover:text-gray-200 transition-colors ${location.pathname === "/" ? "font-semibold border-b-2 border-white pb-1" : ""}`}
+              >
+                Home
+              </Link>
+            </li>
+
+            {user ? (
+              <>
+                <li>
+                  <Link
+                    to={`/${user._id}/home`}
+                    className={`text-white hover:text-gray-200 transition-colors ${location.pathname.includes("/home") ? "font-semibold border-b-2 border-white pb-1" : ""}`}
+                  >
+                    Products
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to={`/${user._id}/services`}
+                    className={`text-white hover:text-gray-200 transition-colors ${location.pathname.includes("/services") ? "font-semibold border-b-2 border-white pb-1" : ""}`}
+                  >
+                    Services
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to={`/${user._id}/orders`}
+                    className={`text-white hover:text-gray-200 transition-colors ${location.pathname.includes("/orders") ? "font-semibold border-b-2 border-white pb-1" : ""}`}
+                  >
+                    My Orders
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to={`/${user._id}/bookings`}
+                    className={`text-white hover:text-gray-200 transition-colors ${location.pathname.includes("/bookings") ? "font-semibold border-b-2 border-white pb-1" : ""}`}
+                  >
+                    My Bookings
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to={`/${user._id}/cart`}
+                    className={`text-white hover:text-gray-200 transition-colors relative ${location.pathname.includes("/cart") ? "font-semibold border-b-2 border-white pb-1" : ""}`}
+                  >
+                    <i className="fas fa-shopping-cart mr-1"></i> Cart
+                    {cart.length > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-pink-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                        {cart.length}
+                      </span>
+                    )}
+                  </Link>
+                </li>
+                <li className="flex items-center">
+                  <div className="flex items-center">
+                    <img
+                      src={getProfileImageUrl() || "/placeholder.svg"}
+                      alt={user.name}
+                      className="h-8 w-8 rounded-full border-2 border-white object-cover"
+                    />
+                    <span className="text-white ml-2 mr-4">{user.name}</span>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="bg-white text-purple-600 hover:bg-gray-100 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                  >
+                    Logout
+                  </button>
+                </li>
+              </>
+            ) : (
+              <li>
+                <Link
+                  to="/user/login"
+                  className="bg-white text-purple-600 hover:bg-gray-100 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                >
+                  Login
+                </Link>
+              </li>
+            )}
+          </ul>
+        </div>
+
+        {/* Second row with search bar */}
+        <div className="py-4 hidden md:block">
+          <SearchBar className="w-full max-w-5xl mx-auto" />
+        </div>
+      </div>
+
+      {/* Mobile menu */}
+      <div
+        className={`md:hidden transition-all duration-300 overflow-hidden ${mobileMenuOpen ? "max-h-screen" : "max-h-0"}`}
+      >
+        <div className="bg-gradient-to-b from-pink-500 to-purple-600 px-4 py-4">
+          <div className="mb-4">
+            <SearchBar />
           </div>
 
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
-              <textarea
-                name="address"
-                value={bookingDetails.address}
-                onChange={handleInputChange}
-                rows="3"
-                required
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring focus:ring-purple-500 focus:ring-opacity-50"
-              ></textarea>
-              <button
-                type="button"
-                onClick={handleAddressChange}
-                className="text-sm text-purple-600 hover:text-purple-800 mt-1"
+          <ul className="space-y-4">
+            <li>
+              <Link
+                to="/"
+                className={`block text-white hover:text-gray-200 py-2 ${location.pathname === "/" ? "font-semibold" : ""}`}
+                onClick={() => setMobileMenuOpen(false)}
               >
-                {bookingDetails.address === user?.address ? "Use Different Address" : "Use My Address"}
-              </button>
-            </div>
+                Home
+              </Link>
+            </li>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-              <input
-                type="tel"
-                name="phone"
-                value={bookingDetails.phone}
-                onChange={handleInputChange}
-                required
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring focus:ring-purple-500 focus:ring-opacity-50"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Alternate Phone (Optional)</label>
-              <input
-                type="tel"
-                name="alternatePhone"
-                value={bookingDetails.alternatePhone}
-                onChange={handleInputChange}
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring focus:ring-purple-500 focus:ring-opacity-50"
-              />
-            </div>
-
-            <div className="flex gap-4 pt-2">
-              <button
-                onClick={() => setStep(1)}
-                className="flex-1 py-2 px-4 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 transition-colors"
-              >
-                Back
-              </button>
-              <button
-                onClick={confirmBooking}
-                disabled={loading}
-                className="flex-1 py-2 px-4 bg-gradient-primary text-white rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 transition-colors"
-              >
-                {loading ? "Processing..." : "Confirm Booking"}
-              </button>
-            </div>
-          </div>
-        </>
-      )}
-    </div>
+            {user ? (
+              <>
+                <li>
+                  <Link
+                    to={`/${user._id}/home`}
+                    className={`block text-white hover:text-gray-200 py-2 ${location.pathname.includes("/home") ? "font-semibold" : ""}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Products
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to={`/${user._id}/services`}
+                    className={`block text-white hover:text-gray-200 py-2 ${location.pathname.includes("/services") ? "font-semibold" : ""}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Services
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to={`/${user._id}/orders`}
+                    className={`block text-white hover:text-gray-200 py-2 ${location.pathname.includes("/orders") ? "font-semibold" : ""}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    My Orders
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to={`/${user._id}/bookings`}
+                    className={`block text-white hover:text-gray-200 py-2 ${location.pathname.includes("/bookings") ? "font-semibold" : ""}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    My Bookings
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to={`/${user._id}/cart`}
+                    className={`block text-white hover:text-gray-200 py-2 ${location.pathname.includes("/cart") ? "font-semibold" : ""}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <i className="fas fa-shopping-cart mr-1"></i> Cart
+                    {cart.length > 0 && (
+                      <span className="ml-2 bg-pink-500 text-white text-xs rounded-full px-2 py-1">{cart.length}</span>
+                    )}
+                  </Link>
+                </li>
+                <li className="pt-2 border-t border-gray-700">
+                  <div className="flex items-center py-2">
+                    <img
+                      src={getProfileImageUrl() || "/placeholder.svg"}
+                      alt={user.name}
+                      className="h-8 w-8 rounded-full border-2 border-white object-cover"
+                    />
+                    <span className="text-white ml-2">{user.name}</span>
+                  </div>
+                </li>
+                <li>
+                  <button
+                    onClick={() => {
+                      handleLogout()
+                      setMobileMenuOpen(false)
+                    }}
+                    className="w-full bg-white text-purple-600 hover:bg-gray-100 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                  >
+                    Logout
+                  </button>
+                </li>
+              </>
+            ) : (
+              <li>
+                <Link
+                  to="/user/login"
+                  className="block w-full text-center bg-white text-purple-600 hover:bg-gray-100 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Login
+                </Link>
+              </li>
+            )}
+          </ul>
+        </div>
+      </div>
+    </nav>
   )
 }
 
-export default BookingForm
+export default Navbar

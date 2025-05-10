@@ -87,7 +87,7 @@ const MyOrdersPage = () => {
           <p className="text-gray-600 mb-4">You haven't placed any orders yet.</p>
           <Link
             to="/"
-            className="inline-block bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded transition-colors"
+            className="inline-block bg-purple-600 hover:bg-purple-700 text-black px-6 py-2 rounded transition-colors"
           >
             Start Shopping
           </Link>

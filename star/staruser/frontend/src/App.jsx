@@ -15,7 +15,7 @@ import { CartProvider } from "./context/CartContext"
 import ProtectedRoute from "./components/ProtectedRoute"
 import ErrorBoundary from "./components/ErrorBoundary"
 import { Toaster } from "react-hot-toast"
-import "./App.css"
+import CategoryPage from "./pages/CategoryPage"
 
 function App() {
   return (
@@ -23,9 +23,9 @@ function App() {
       <AuthProvider>
         <CartProvider>
           <Router>
-            <div className="app-container min-h-screen flex flex-col bg-gray-50">
+            <div className="min-h-screen flex flex-col bg-gray-50">
               <Navbar />
-              <main className="main-content flex-grow pt-20">
+              <main className="flex-grow pt-20">
                 <Routes>
                   <Route path="/" element={<GuestPage />} />
                   <Route path="/user/login" element={<LoginPage />} />
@@ -68,6 +68,14 @@ function App() {
                     element={
                       <ProtectedRoute>
                         <MyBookingsPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/:userId/category/:category"
+                    element={
+                      <ProtectedRoute>
+                        <CategoryPage />
                       </ProtectedRoute>
                     }
                   />

@@ -79,8 +79,8 @@ const ProductCard = ({ product }) => {
           <div className="mb-4">
             {product.discount > 0 ? (
               <div className="flex items-center">
-                <span className="text-pink-500 font-bold text-lg mr-2">₹{discountedPrice.toFixed(2)}</span>
-                <span className="text-gray-400 line-through text-sm">₹{product.price.toFixed(2)}</span>
+                <span className="text-pink-600 font-bold text-lg mr-2">₹{discountedPrice.toFixed(2)}</span>
+                <span className="text-gray-500 line-through text-sm">₹{product.price.toFixed(2)}</span>
               </div>
             ) : (
               <span className="font-bold text-lg text-purple-700">₹{product.price.toFixed(2)}</span>
@@ -97,7 +97,7 @@ const ProductCard = ({ product }) => {
                   <i className="fas fa-cart-plus mr-1"></i> Add
                 </button>
                 <button
-                  className="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white py-2 px-3 rounded-md text-sm font-medium transition-colors"
+                  className="flex-1 bg-pink-600 hover:bg-pink-700 text-white py-2 px-3 rounded-md text-sm font-medium transition-colors"
                   onClick={handleOrderNow}
                 >
                   Buy Now
@@ -105,7 +105,7 @@ const ProductCard = ({ product }) => {
               </div>
             ) : (
               <button
-                className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white py-2 rounded-md text-sm font-medium transition-colors"
+                className="w-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white py-2 rounded-md text-sm font-medium transition-colors"
                 onClick={() => navigate("/user/login")}
               >
                 Login to Shop
@@ -193,7 +193,7 @@ const ProductCard = ({ product }) => {
                       <i className="fas fa-cart-plus mr-2"></i> Add to Cart
                     </button>
                     <button
-                      className="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white py-3 px-6 rounded-md font-medium transition-colors flex items-center justify-center"
+                      className="flex-1 bg-pink-500 hover:bg-pink-700 text-white py-2 px-3 rounded-md text-sm font-medium transition-colors flex items-center justify-center"
                       onClick={handleOrderNow}
                     >
                       <i className="fas fa-bolt mr-2"></i> Buy Now

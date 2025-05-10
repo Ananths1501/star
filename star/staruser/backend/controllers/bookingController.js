@@ -1,6 +1,11 @@
 const Booking = require("../models/Booking")
 const { Service, Worker } = require("../models/Service")
-const { isTimeSlotAvailable } = require("../utils/helpers")
+
+// Helper to convert time string (HH:MM) to minutes
+const timeToMinutes = (timeString) => {
+  const [hours, minutes] = timeString.split(":").map(Number)
+  return hours * 60 + minutes
+}
 
 // Check worker availability
 exports.checkAvailability = async (req, res) => {
@@ -23,6 +28,7 @@ exports.checkAvailability = async (req, res) => {
       return res.status(400).json({
         message: "Worker is on leave",
         available: false,
+        reason: "leave",
       })
     }
 
@@ -31,9 +37,54 @@ exports.checkAvailability = async (req, res) => {
     const checkEndTime = fullDay ? "18:00" : endTime
 
     // Check if time slot is available
-    const available = await isTimeSlotAvailable(workerId, date, checkStartTime, checkEndTime)
+    const bookingDate = new Date(date)
+    bookingDate.setHours(0, 0, 0, 0)
 
-    res.json({ available })
+    const existingBookings = await Booking.find({
+      worker: workerId,
+      date: bookingDate,
+      status: { $nin: ["Cancelled"] },
+    })
+
+    // If no bookings, the worker is available
+    if (existingBookings.length === 0) {
+      return res.json({ available: true })
+    }
+
+    // Convert times to minutes for easier comparison
+    const requestStartMinutes = timeToMinutes(checkStartTime)
+    const requestEndMinutes = timeToMinutes(checkEndTime)
+
+    // Check for overlap with existing bookings
+    let available = true
+    let conflictingBooking = null
+
+    for (const booking of existingBookings) {
+      const bookingStartMinutes = timeToMinutes(booking.startTime)
+      const bookingEndMinutes = timeToMinutes(booking.endTime)
+
+      // Check if there's an overlap
+      if (
+        (requestStartMinutes >= bookingStartMinutes && requestStartMinutes < bookingEndMinutes) ||
+        (requestEndMinutes > bookingStartMinutes && requestEndMinutes <= bookingEndMinutes) ||
+        (requestStartMinutes <= bookingStartMinutes && requestEndMinutes >= bookingEndMinutes)
+      ) {
+        available = false
+        conflictingBooking = booking
+        break
+      }
+    }
+
+    if (!available) {
+      return res.json({
+        available: false,
+        reason: "booking_conflict",
+        conflictTime: `${conflictingBooking.startTime} - ${conflictingBooking.endTime}`,
+        message: `Worker is already booked from ${conflictingBooking.startTime} to ${conflictingBooking.endTime} on this date.`,
+      })
+    }
+
+    res.json({ available: true })
   } catch (error) {
     console.error("Check availability error:", error)
     res.status(500).json({ message: "Server error", error: error.message })
@@ -83,10 +134,35 @@ exports.createBooking = async (req, res) => {
     const bookingEndTime = fullDay ? "18:00" : endTime
 
     // Check if time slot is available
-    const available = await isTimeSlotAvailable(workerId, date, bookingStartTime, bookingEndTime)
+    const bookingDate = new Date(date)
+    bookingDate.setHours(0, 0, 0, 0)
 
-    if (!available) {
-      return res.status(400).json({ message: "Worker is not available at the selected time" })
+    const existingBookings = await Booking.find({
+      worker: workerId,
+      date: bookingDate,
+      status: { $nin: ["Cancelled"] },
+    })
+
+    // Convert times to minutes for easier comparison
+    const requestStartMinutes = timeToMinutes(bookingStartTime)
+    const requestEndMinutes = timeToMinutes(bookingEndTime)
+
+    // Check for overlap with existing bookings
+    for (const booking of existingBookings) {
+      const bookingStartMinutes = timeToMinutes(booking.startTime)
+      const bookingEndMinutes = timeToMinutes(booking.endTime)
+
+      // Check if there's an overlap
+      if (
+        (requestStartMinutes >= bookingStartMinutes && requestStartMinutes < bookingEndMinutes) ||
+        (requestEndMinutes > bookingStartMinutes && requestEndMinutes <= bookingEndMinutes) ||
+        (requestStartMinutes <= bookingStartMinutes && requestEndMinutes >= bookingEndMinutes)
+      ) {
+        return res.status(400).json({
+          message: `Worker is already booked from ${booking.startTime} to ${booking.endTime} on this date.`,
+          available: false,
+        })
+      }
     }
 
     // Create booking
@@ -94,7 +170,7 @@ exports.createBooking = async (req, res) => {
       user: req.user._id,
       worker: workerId,
       service: serviceId,
-      date: new Date(date),
+      date: bookingDate,
       startTime: bookingStartTime,
       endTime: bookingEndTime,
       fullDay,

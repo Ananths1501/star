@@ -36,7 +36,7 @@ const ServiceCard = ({ service, onSelectService }) => {
       </div>
       <div className="p-4 flex flex-col flex-grow bg-gradient-card">
         <h3 className="text-lg font-semibold text-purple-700 mb-2">{service.serviceType}</h3>
-        <p className="text-gray-600 mb-4 text-sm flex-grow">{service.description}</p>
+        <p className="text-gray-700 mb-4 text-sm flex-grow">{service.description}</p>
         <div className="mt-auto">
           <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
             <i className="fas fa-user-hard-hat mr-1"></i> {service.workers?.length || 0} Workers Available
